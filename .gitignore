@@ -4,3 +4,10 @@ client/dist
 .env
 .netlify
 .DS_Store
+
+# Local tool state and build artifacts
+.expo/
+.omc/
+.design-backup-*/
+*.tgz
+dist/
