@@ -8,7 +8,7 @@ import User from "../models/User.js";
 import { connectDB } from "../db.js";
 import { requireAuth, optionalAuth, isAdminEmail, wrap } from "../auth.js";
 import { HttpError } from "../marketData.js";
-import { snapshot, saveDataset, refreshLive, isLiveStale, cardView, detailView, PublishError } from "../algorithms.js";
+import { snapshot, saveDataset, refreshLive, isLiveStale, cardView, detailView, rankScore, PublishError } from "../algorithms.js";
 
 // Marketplace of verified algorithms from approved experts.
 //  Public: browse, view results. Followers: see rules, copy, re-check the verification.
@@ -63,12 +63,15 @@ router.get("/", wrap(async (req, res) => {
     filter.$or = [{ name: re }, { summary: re }, { symbol: re }, { tags: q.toLowerCase() }];
   }
   const sorts = {
+    // Risk-adjusted: return at the same (10%) volatility; see rankScore() in algorithms.js
+    risk: { rankScore: -1, followers: -1 },
+    riskBacktest: { "verification.risk.riskAdjReturnPct": -1 },
     live: { "live.metrics.totalReturnPct": -1, followers: -1 },
     verified: { "verification.metrics.totalReturnPct": -1 },
     followers: { followers: -1, publishedAt: -1 },
     new: { publishedAt: -1 },
   };
-  const sort = sorts[req.query.sort] || sorts.followers;
+  const sort = sorts[req.query.sort] || sorts.risk;
   const items = await Algorithm.find(filter).sort(sort).limit(60).populate("author", AUTHOR_FIELDS);
   res.json({ ok: true, algorithms: items.map(cardView) });
 }));
@@ -115,6 +118,7 @@ router.post("/", requireAuth, wrap(async (req, res) => {
     author: user._id, strategy: strategy._id, name: listing.name || strategy.name, summary: listing.summary,
     description: listing.description ?? "", tags: listing.tags ?? [], ...snap.fields,
     version: 1, publishedAt: new Date(), live: { since: new Date(), started: false },
+    rankScore: rankScore({ verification: snap.fields.verification }),
   });
   await saveDataset(algo._id, 1, snap.fields.verification.dataHash, snap.rows);
   await algo.populate("author", AUTHOR_FIELDS);
@@ -182,6 +186,7 @@ router.post("/:id/republish", requireAuth, wrap(async (req, res) => {
   algo.version += 1;
   algo.publishedAt = new Date();
   algo.live = { since: algo.publishedAt, started: false };
+  algo.rankScore = rankScore(algo);
   await algo.save();
   await saveDataset(algo._id, algo.version, snap.fields.verification.dataHash, snap.rows);
   await algo.populate("author", AUTHOR_FIELDS);

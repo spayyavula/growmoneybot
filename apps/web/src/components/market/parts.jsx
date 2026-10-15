@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { OPERATORS, INTERVALS, operandLabel, fmt } from "@gmb/core";
+import { OPERATORS, INTERVALS, operandLabel, fmt, TARGET_VOL_PCT } from "@gmb/core";
+import { RiskMeter, riskAdjHint } from "./charts.jsx";
 
 // Marketplace pages live both publicly (/marketplace) and inside the app (/app/marketplace).
 export function useMarketBase() {
@@ -54,6 +55,7 @@ export const Pct = ({ v, digits = 1 }) => <span className={fmt.signClass(v)}>{Nu
 export function AlgoCard({ a }) {
   const { market } = useMarketBase();
   const lm = a.live?.metrics, vm = a.verified?.metrics || {};
+  const vr = a.verified?.risk || {}, lr = a.live?.risk;
   return (
     <article className="algo-card">
       <Link to={`${market}/${a._id}`} className="algo-link" aria-label={`${a.name} by ${a.author?.displayName}`} />
@@ -75,13 +77,17 @@ export function AlgoCard({ a }) {
           <dt>Verified backtest</dt>
           <dd><Pct v={vm.totalReturnPct} /></dd>
         </div>
-        <div>
-          <dt>Max drawdown</dt>
-          <dd>{fmt.pct(vm.maxDrawdownPct, 1)}</dd>
+        <div title={riskAdjHint}>
+          <dt>At {TARGET_VOL_PCT}% volatility</dt>
+          <dd>
+            {!a.live?.lowSample && lr?.riskAdjReturnPct != null
+              ? <><Pct v={lr.riskAdjReturnPct} /> <span className="dd-note">live</span></>
+              : <><Pct v={vr.riskAdjReturnPct} /> <span className="dd-note">backtest</span></>}
+          </dd>
         </div>
         <div>
-          <dt>Trades</dt>
-          <dd>{fmt.num(vm.totalTrades, 0)}</dd>
+          <dt>Max drawdown · risk</dt>
+          <dd className="dd-risk">{fmt.pct(vm.maxDrawdownPct, 1)} <RiskMeter rating={vr.rating} compact /></dd>
         </div>
       </dl>
       <div className="algo-foot">

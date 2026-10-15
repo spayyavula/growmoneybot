@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { fmt, verifyBacktest, rowsToCandles, receiptHashOf, metricsMatch } from "@gmb/core";
+import { fmt, verifyBacktest, rowsToCandles, receiptHashOf, metricsMatch, TARGET_VOL_PCT, RISK_LABELS } from "@gmb/core";
 import * as api from "../api.js";
 import { useAuth } from "../lib/auth.jsx";
-import { EquityChart } from "../components/app/PriceChart.jsx";
 import { MetricsGrid, TradesTable } from "../components/app/Results.jsx";
 import { ExpertByline, VerifiedSeal, RulesView, Pct, intervalLabel, shortHash, useMarketBase } from "../components/market/parts.jsx";
+import { CompareChart, MonthlyGrid, RiskMeter, compareSeries, riskAdjHint } from "../components/market/charts.jsx";
 
 const ts = (d) => Math.floor(new Date(d).getTime() / 1000);
 
@@ -30,6 +30,8 @@ export default function AlgorithmPage() {
   const access = a.access || {};
   const live = a.live || {};
   const v = a.verification || {};
+  const lr = live.risk;
+  const liveRanked = live.started && lr && !lr.lowSample && (live.metrics?.totalTrades ?? 0) >= 3;
   const needLogin = () => navigate("/login", { state: { from: location.pathname } });
 
   const follow = async () => {
@@ -80,6 +82,7 @@ export default function AlgorithmPage() {
             </button>
           )}
           {access.canSeeRules && user && <button className="btn btn-ghost" onClick={copy} disabled={busy}>Copy to my strategies</button>}
+          <Link to={`${market}/${a._id}/factsheet`} className="btn btn-plain">Fact sheet</Link>
         </div>
       </header>
       {msg.text && <p className={`form-msg ${msg.state}`}>{msg.text}</p>}
@@ -95,10 +98,15 @@ export default function AlgorithmPage() {
           <strong><Pct v={v.metrics?.totalReturnPct} /></strong>
           <span className="kpi-sub">{fmt.date(v.from)} → {fmt.date(v.to)} · {fmt.num(v.metrics?.totalTrades, 0)} trades</span>
         </div>
+        <div className="kpi" title={riskAdjHint}>
+          <span className="kpi-label">At {TARGET_VOL_PCT}% volatility</span>
+          <strong><Pct v={liveRanked ? lr.riskAdjReturnPct : v.risk?.riskAdjReturnPct} /></strong>
+          <span className="kpi-sub">{liveRanked ? "Live, risk-adjusted per year" : live.started ? "Backtest. Live needs 30+ bars and 3+ trades" : "Backtest, risk-adjusted per year"}</span>
+        </div>
         <div className="kpi">
-          <span className="kpi-label">Buy &amp; hold, same period</span>
-          <strong><Pct v={v.metrics?.buyHoldPct} /></strong>
-          <span className="kpi-sub">If you had simply held {a.symbol} over the backtest</span>
+          <span className="kpi-label">Risk</span>
+          <strong className="kpi-risk"><RiskMeter rating={v.risk?.rating} /></strong>
+          <span className="kpi-sub">{fmt.pct(v.risk?.volatilityPct, 1)} volatility · {fmt.pct(v.metrics?.maxDrawdownPct, 1)} max drawdown</span>
         </div>
       </section>
 
@@ -117,8 +125,8 @@ export default function AlgorithmPage() {
                   {live.error && ` Last update failed (${live.error}); showing the previous result.`}
                 </p>
                 <MetricsGrid m={live.metrics} />
-                <h4>Equity</h4>
-                <EquityChart equity={live.equity} />
+                <h4>Growth of 100 since publish</h4>
+                <CompareChart series={compareSeries(a.name, live.equity, live.benchmarks)} />
                 <h4>Trades</h4>
                 <TradesTable trades={live.trades || []} openTrade={live.openTrade} intraday={["15m", "1h", "4h"].includes(a.interval)} />
               </>
@@ -136,8 +144,17 @@ export default function AlgorithmPage() {
                 {v.bars} bars of {a.symbol} from {fmt.date(v.from)} to {fmt.date(v.to)}, fetched and run by GrowMoneyBot on {fmt.date(ts(v.verifiedAt))}.
               </p>
               <MetricsGrid m={v.metrics} />
-              <h4>Equity</h4>
-              <EquityChart equity={v.equity} />
+              <h4>Growth of 100 vs. buy and hold</h4>
+              <CompareChart series={compareSeries(a.name, v.equity, v.benchmarks)} />
+              {v.risk && (
+                <p className="muted small">
+                  Scaled to {TARGET_VOL_PCT}% volatility ({fmt.num(v.risk.scale, 2)}× its size) this strategy would have returned{" "}
+                  <Pct v={v.risk.riskAdjReturnPct} /> a year with a {fmt.pct(v.risk.riskAdjMaxDrawdownPct, 1)} max drawdown.
+                  Risk {v.risk.rating}/5 ({RISK_LABELS[v.risk.rating]?.toLowerCase()}).
+                </p>
+              )}
+              <h4>Monthly returns (%)</h4>
+              <MonthlyGrid monthly={v.monthly} />
               <h4>Trades</h4>
               <TradesTable trades={v.trades || []} openTrade={v.openTrade} intraday={["15m", "1h", "4h"].includes(a.interval)} />
             </>

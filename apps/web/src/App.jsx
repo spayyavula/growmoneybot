@@ -17,6 +17,7 @@ const AlgorithmPage = lazy(() => import("./pages/AlgorithmPage.jsx"));
 const ExpertProfile = lazy(() => import("./pages/ExpertProfile.jsx"));
 const ExpertProgram = lazy(() => import("./pages/ExpertProgram.jsx"));
 const Admin = lazy(() => import("./pages/Admin.jsx"));
+const FactSheet = lazy(() => import("./pages/FactSheet.jsx"));
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route element={<PublicLayout />}>
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/marketplace/:id" element={<AlgorithmPage />} />
+          <Route path="/marketplace/:id/factsheet" element={<FactSheet />} />
           <Route path="/experts/:id" element={<ExpertProfile />} />
         </Route>
         <Route path="/app" element={<RequireAuth><AppLayout /></RequireAuth>}>
@@ -38,6 +40,7 @@ export default function App() {
           <Route path="account" element={<Account />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="marketplace/:id" element={<AlgorithmPage />} />
+          <Route path="marketplace/:id/factsheet" element={<FactSheet />} />
           <Route path="experts" element={<ExpertProgram />} />
           <Route path="experts/:id" element={<ExpertProfile />} />
           <Route path="admin" element={<Admin />} />
