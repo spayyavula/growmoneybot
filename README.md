@@ -64,6 +64,26 @@ stop loss and take profit.
 | GET | `/api/market/candles?market=crypto\|stocks&symbol=&interval=15m\|1h\|4h\|1d\|1w&bars=50-5000` | ✓ | OHLCV candles |
 | POST | `/api/webhooks/tv/:token` | token in URL | TradingView alert receiver (JSON or text) → push notification |
 | GET/DELETE | `/api/signals` | ✓ | Received alerts (kept 90 days) |
+| GET | `/api/marketplace?sort=followers\|live\|verified\|new&market=&q=` | optional | Published algorithms (results only, never rules) |
+| GET | `/api/marketplace/:id` | optional | Algorithm page; rules included for followers, the author and admins |
+| POST | `/api/marketplace` | approved expert | `{ strategyId, summary, description?, tags? }` → server re-runs and publishes |
+| PUT · POST | `/api/marketplace/:id` · `/:id/republish` | author | Edit listing / list-unlist · publish a new version |
+| POST/DELETE | `/api/marketplace/:id/follow` | ✓ | Follow / unfollow |
+| POST · GET | `/api/marketplace/:id/copy` · `/:id/dataset` | follower | Copy rules into my strategies · frozen dataset for re-checking |
+| GET · POST · PUT | `/api/experts/me` · `/apply` · `/me` | ✓ | Expert program status, application, profile |
+| GET | `/api/experts/:id` | — | Public expert profile + published algorithms |
+| GET/POST | `/api/admin/experts…` · `/api/admin/algorithms…` | admin | Approve / reject / revoke experts; remove / restore algorithms |
+
+## Expert marketplace
+
+Approved expert traders publish algorithms; anyone can browse the results, and followers unlock the rules.
+
+- **Experts are approved by hand.** Traders apply from *Account → Expert program*. Admins (emails in `ADMIN_EMAILS`) review applications at `/app/admin`.
+- **Results are verified, not uploaded.** On publish the server fetches the price history itself (completed bars only), runs the shared backtest engine, and stores the frozen rules, the exact dataset and a receipt: SHA-256 fingerprints of the rules (`specHash`), the data (`dataHash`) and `{ engine, specHash, dataHash, metrics }` (`receiptHash`). CSV data can't be published, and a backtest needs at least 10 closed trades.
+- **Live track record.** From the publish date, only trades the rules enter after publishing count (indicators warm up on earlier bars). It refreshes when the page is viewed and hourly via the scheduled function `netlify/functions/refresh-live.mjs`.
+- **New versions don't erase history.** Publishing changed rules creates a new version, restarts live tracking, and keeps the old version's verified and live results in the algorithm's history.
+- **Anyone following can re-check.** The algorithm page downloads the frozen dataset and re-runs `verifyBacktest` from `@gmb/core` in the browser, then compares all fingerprints and metrics.
+- **Not in this version:** paid subscriptions and revenue sharing for experts, and live signal delivery for algorithms whose rules stay private.
 
 ## 1. Accounts you need
 

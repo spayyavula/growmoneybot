@@ -118,6 +118,9 @@ export default function StrategyEditor() {
           </select>
         )}
         <div className="head-actions">
+          {!isNew && user?.expert?.status === "approved" && s.market !== "csv" && (
+            <Link to={`/app/experts?publish=${id}`} className="btn btn-plain">Publish…</Link>
+          )}
           <button className="btn btn-ghost" onClick={save} disabled={busy}>Save</button>
           <button className="btn" onClick={backtest} disabled={busy}>Run backtest</button>
         </div>

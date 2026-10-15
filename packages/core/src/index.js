@@ -3,6 +3,10 @@ export * as indicators from "./indicators.js";
 export * from "./catalog.js";
 export { computeOperand, operandKey, ruleSeries, sourceSeries } from "./evaluate.js";
 export { runBacktest, computeMetrics } from "./backtest.js";
+export {
+  ENGINE_VERSION, LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, canonicalJson, sha256Hex, strategySpec, candleRows, rowsToCandles,
+  receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance,
+} from "./verify.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";
 export { loadCandles, tradingViewUrl, isIntraday, QUICK_SYMBOLS } from "./candles.js";

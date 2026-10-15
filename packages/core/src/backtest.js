@@ -12,8 +12,11 @@ import { INTERVALS } from "./catalog.js";
  *  - Commission is a percentage of traded value, charged on entry and exit.
  *
  * bars: [{ time (unix seconds), open, high, low, close, volume }]
+ * options.tradeFrom: unix seconds; entry signals on bars before this time are ignored.
+ *   Used for live (forward) tracking: indicators warm up on earlier bars, but only
+ *   trades the rules open after the publish date count.
  */
-export function runBacktest(bars, strategy) {
+export function runBacktest(bars, strategy, options = {}) {
   if (!bars?.length || bars.length < 3) throw new Error("Not enough price data to backtest");
 
   const risk = { initialCapital: 10000, positionSizePct: 100, feePct: 0, stopLossPct: 0, takeProfitPct: 0, ...strategy.risk };
@@ -99,7 +102,7 @@ export function runBacktest(bars, strategy) {
     // 3) Evaluate signals on this bar's close (orders fill next bar)
     if (i < bars.length - 1) {
       if (pos && exitSig[i]) pending = "exit";
-      else if (!pos && entrySig[i]) {
+      else if (!pos && entrySig[i] && !(options.tradeFrom && bar.time < options.tradeFrom)) {
         // Pine's percent_of_equity sizing: equity * pct / signal-bar close, truncated to 6 decimals
         pending = "entry";
         pendingQty = Math.floor(((cash * risk.positionSizePct) / 100 / bar.close) * 1e6) / 1e6;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Logo from "./Logo.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
 import { useAuth } from "../lib/auth.jsx";
@@ -14,16 +14,19 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  // Section links point at the landing page when shown on other public pages
+  const onLanding = useLocation().pathname === "/";
   return (
     <header className="nav">
       <div className="container nav-inner">
-        <a href="#top" className="brand">
+        <a href={onLanding ? "#top" : "/"} className="brand">
           <Logo size={34} />
           <span>GrowMoney<b>Bot</b></span>
         </a>
         <nav className={`nav-links ${open ? "open" : ""}`}>
+          <Link to="/marketplace" onClick={() => setOpen(false)}>Marketplace</Link>
           {links.map((l) => (
-            <a key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
+            <a key={l.href} href={onLanding ? l.href : `/${l.href}`} onClick={() => setOpen(false)}>{l.label}</a>
           ))}
           {user ? (
             <Link to="/app" className="btn btn-small">Open app</Link>

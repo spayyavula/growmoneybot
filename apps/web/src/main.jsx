@@ -6,6 +6,7 @@ import { AuthProvider } from "./lib/auth.jsx";
 import { ThemeProvider } from "./lib/theme.jsx";
 import "./index.css";
 import "./app.css";
+import "./market.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

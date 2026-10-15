@@ -27,3 +27,16 @@ export function requireAuth(req, res, next) {
 
 // Wrap async handlers so thrown errors reach the error middleware
 export const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+// Like requireAuth, but lets anonymous requests through (req.userId stays undefined)
+export function optionalAuth(req, _res, next) {
+  const header = req.headers.authorization || "";
+  if (header.startsWith("Bearer ")) {
+    try { req.userId = jwt.verify(header.slice(7), secret()).sub; } catch { /* treat as anonymous */ }
+  }
+  next();
+}
+
+// Admins are listed by email in ADMIN_EMAILS (comma-separated)
+export const isAdminEmail = (email) =>
+  !!email && (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean).includes(String(email).toLowerCase());
