@@ -1,0 +1,37 @@
+{
+  "name": "growmoneybot",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GrowMoneyBot - strategy builder & backtester. Web (React) + mobile (Expo) + API (Express on Netlify Functions) + MongoDB Atlas",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "netlify dev",
+    "dev:server": "node server/local.js",
+    "dev:web": "npm run dev -w @gmb/web",
+    "dev:mobile": "npm run start -w @gmb/mobile",
+    "build": "npm run build -w @gmb/web",
+    "build:web": "npm run build -w @gmb/web"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "expo-dev-client": "~57.0.20",
+    "expo-router": "~57.0.27",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.9.5",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7",
+    "netlify-cli": "^27.12.1"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

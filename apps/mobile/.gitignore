@@ -1,0 +1,8 @@
+node_modules
+.expo
+dist
+dist-check
+web-build
+.env
+ios
+android

@@ -1,0 +1,31 @@
+[build]
+  command = "npm run build:web"
+  publish = "apps/web/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Only install the web app, shared core and server deps on Netlify — skips the Expo app
+  NPM_FLAGS = "--workspace=@gmb/web --workspace=@gmb/core --include-workspace-root"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["mongoose"]
+
+[dev]
+  command = "npm run dev:web"
+  targetPort = 5173
+  port = 8888
+
+# Send every /api/* request to the Express app running as a Netlify Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# React single-page-app fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
