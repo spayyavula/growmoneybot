@@ -7,6 +7,9 @@ import strategiesRouter from "./routes/strategies.js";
 import pineRouter from "./routes/pine.js";
 import marketRouter from "./routes/market.js";
 import devicesRouter from "./routes/devices.js";
+import expertsRouter from "./routes/experts.js";
+import marketplaceRouter from "./routes/marketplace.js";
+import adminRouter from "./routes/admin.js";
 import { webhookRouter, signalsRouter } from "./routes/webhooks.js";
 
 const app = express();
@@ -34,6 +37,9 @@ api.use("/pine", pineRouter);
 api.use("/market", marketRouter);
 api.use("/devices", devicesRouter);
 api.use("/signals", signalsRouter);
+api.use("/experts", expertsRouter);
+api.use("/marketplace", marketplaceRouter);
+api.use("/admin", adminRouter);
 
 app.use("/api", api);
 app.use("/.netlify/functions/api", api);

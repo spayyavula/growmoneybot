@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { webhookUrl } from "@gmb/core";
 import * as api from "../api.js";
 import { useAuth } from "../lib/auth.jsx";
@@ -37,6 +38,21 @@ export default function Account() {
         </div>
         {msg && <p className="form-msg success">{msg}</p>}
         <p className="muted tiny">Keep this private — anyone with it can post alerts to your account.</p>
+      </section>
+
+      <section className="panel">
+        <h3>Expert program</h3>
+        <p className="small">
+          {user?.expert?.status === "approved"
+            ? "You're an approved expert. Publish strategies to the marketplace and manage your listings."
+            : user?.expert?.status === "pending"
+              ? "Your application is under review."
+              : "Experienced trader? Apply to publish your algorithms with verified results."}
+        </p>
+        <div className="copy-row">
+          <Link to="/app/experts" className="btn btn-ghost btn-small">{user?.expert?.status === "approved" ? "Open Expert program" : "Expert program"}</Link>
+          {user?.isAdmin && <Link to="/app/admin" className="btn btn-plain btn-small">Admin review</Link>}
+        </div>
       </section>
 
       <section className="panel">

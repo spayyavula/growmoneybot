@@ -58,13 +58,22 @@ router.delete("/account", requireAuth, wrap(async (req, res) => {
   if (!user) return res.status(401).json({ ok: false, error: "Account not found" });
   if (!(await bcrypt.compare(String(req.body?.password || ""), user.passwordHash)))
     return res.status(403).json({ ok: false, error: "Incorrect password" });
-  const [{ default: Strategy }, { default: PineScript }, { default: Signal }] = await Promise.all([
+  const [{ default: Strategy }, { default: PineScript }, { default: Signal }, { default: Algorithm }, { default: AlgoDataset }, { default: Follow }] = await Promise.all([
     import("../models/Strategy.js"), import("../models/PineScript.js"), import("../models/Signal.js"),
+    import("../models/Algorithm.js"), import("../models/AlgoDataset.js"), import("../models/Follow.js"),
   ]);
+  // Marketplace: remove the user's published algorithms (and their datasets/follows) and their follows
+  const algos = await Algorithm.find({ author: user._id }).select("_id").lean();
+  const algoIds = algos.map((a) => a._id);
+  const myFollows = await Follow.find({ user: user._id }).select("algorithm").lean();
   await Promise.all([
     Strategy.deleteMany({ user: user._id }),
     PineScript.deleteMany({ user: user._id }),
     Signal.deleteMany({ user: user._id }),
+    Algorithm.deleteMany({ _id: { $in: algoIds } }),
+    AlgoDataset.deleteMany({ algorithm: { $in: algoIds } }),
+    Follow.deleteMany({ $or: [{ user: user._id }, { algorithm: { $in: algoIds } }] }),
+    ...myFollows.map((f) => Algorithm.updateOne({ _id: f.algorithm, followers: { $gt: 0 } }, { $inc: { followers: -1 } })),
   ]);
   await User.deleteOne({ _id: user._id });
   res.json({ ok: true });

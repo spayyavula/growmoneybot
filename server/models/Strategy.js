@@ -25,6 +25,11 @@ const strategySchema = new mongoose.Schema(
       stopLossPct: { type: Number, min: 0, max: 100, default: 0 },
       takeProfitPct: { type: Number, min: 0, max: 1000, default: 0 },
     },
+    // Set when the strategy was copied from a marketplace algorithm
+    source: {
+      algorithm: { type: mongoose.Schema.Types.ObjectId, ref: "Algorithm" },
+      version: Number,
+    },
     lastBacktest: {
       metrics: { type: mongoose.Schema.Types.Mixed },
       ranAt: Date,

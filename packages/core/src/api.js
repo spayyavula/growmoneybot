@@ -64,6 +64,32 @@ export function createApi({ baseUrl = "/api", getToken = () => null, onUnauthori
     // Market data & signals
     getCandles: ({ market, symbol, interval, bars }) =>
       request(`/market/candles?${q({ market, symbol, interval, bars: String(bars) })}`),
+    // Expert program
+    getExpertMe: () => request("/experts/me"),
+    applyExpert: (body) => request("/experts/apply", { method: "POST", body }),
+    updateExpertProfile: (body) => request("/experts/me", { method: "PUT", body }),
+    getExpert: (id) => request(`/experts/${id}`),
+
+    // Marketplace (browsing works without logging in)
+    listMarketplace: (params = {}) => request(`/marketplace?${q(params)}`),
+    listFollowing: () => request("/marketplace/following"),
+    listMyAlgorithms: () => request("/marketplace/mine"),
+    getAlgorithm: (id) => request(`/marketplace/${id}`),
+    publishAlgorithm: (body) => request("/marketplace", { method: "POST", body }),
+    updateAlgorithm: (id, body) => request(`/marketplace/${id}`, { method: "PUT", body }),
+    republishAlgorithm: (id, body) => request(`/marketplace/${id}/republish`, { method: "POST", body }),
+    followAlgorithm: (id) => request(`/marketplace/${id}/follow`, { method: "POST" }),
+    unfollowAlgorithm: (id) => request(`/marketplace/${id}/follow`, { method: "DELETE" }),
+    copyAlgorithm: (id) => request(`/marketplace/${id}/copy`, { method: "POST" }),
+    getAlgorithmDataset: (id) => request(`/marketplace/${id}/dataset`),
+
+    // Admin review
+    adminListExperts: (status) => request(`/admin/experts?${q({ status })}`),
+    adminReviewExpert: (id, action, note) => request(`/admin/experts/${id}/${action}`, { method: "POST", body: { note } }),
+    adminListAlgorithms: (status) => request(`/admin/algorithms?${q({ status })}`),
+    adminRemoveAlgorithm: (id, reason) => request(`/admin/algorithms/${id}/remove`, { method: "POST", body: { reason } }),
+    adminRestoreAlgorithm: (id) => request(`/admin/algorithms/${id}/restore`, { method: "POST" }),
+
     listSignals: (strategyId) => request(`/signals${strategyId ? `?${q({ strategyId })}` : ""}`),
     clearSignals: () => request("/signals", { method: "DELETE" }),
   };

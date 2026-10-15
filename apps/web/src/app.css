@@ -27,7 +27,7 @@
 .app-foot { padding: 14px 16px calc(92px + var(--safe-bottom)); text-align: center; color: var(--label-3); }
 
 .tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--glass-strong); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
   border-top: 0.5px solid var(--sep); padding-bottom: var(--safe-bottom);
 }
