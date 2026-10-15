@@ -2,7 +2,7 @@
 // engine, freezes the rules + dataset, and keeps a forward (live) track record.
 import {
   verifyBacktest, livePerformance, strategySpec, candleRows, downsample, slimTrades,
-  LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES,
+  LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, riskProfile, monthlyReturns, holdCurve, marketBenchmark,
 } from "@gmb/core";
 import Algorithm from "./models/Algorithm.js";
 import AlgoDataset from "./models/AlgoDataset.js";
@@ -12,7 +12,41 @@ export class PublishError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
 }
 
+export const MIN_LIVE_TRADES = 3;
+// Backtests overstate what strategies do next, so an unproven backtest counts at half weight
+export const BACKTEST_RANK_WEIGHT = 0.5;
+
+const hasLiveHistory = (live) => !!live?.started && !!live?.risk && !live.risk.lowSample && (live.metrics?.totalTrades ?? 0) >= MIN_LIVE_TRADES;
+
+/** One number to rank by: live risk-adjusted return once proven, otherwise a discounted backtest. */
+export function rankScore({ verification, live }) {
+  if (hasLiveHistory(live) && Number.isFinite(live.risk.riskAdjReturnPct)) return live.risk.riskAdjReturnPct;
+  const b = verification?.risk?.riskAdjReturnPct;
+  return Number.isFinite(b) ? b * BACKTEST_RANK_WEIGHT : null;
+}
 const equityPoints = (equity, max) => downsample(equity, max).map((p) => ({ time: p.time, value: Number(p.value.toPrecision(10)) }));
+
+// Buy-and-hold comparisons over the same bars: the algorithm's own symbol, and the broad market
+// (Bitcoin for crypto, SPY for stocks). A failed benchmark fetch never blocks publishing.
+async function benchmarks({ market, symbol, interval }, candles, initial) {
+  const out = [];
+  // Curves start from `initial` at the first bar's open, the same basis as the buy & hold metric
+  const pack = (key, label, sym, curve) => curve.length > 1 && out.push({
+    key, label, symbol: sym, base: initial, returnPct: Number(((curve[curve.length - 1].value / initial - 1) * 100).toPrecision(8)),
+    equity: equityPoints(curve, 400),
+  });
+  pack("hold", `Hold ${symbol}`, symbol, holdCurve(candles, initial));
+  const bm = marketBenchmark(market);
+  if (bm.symbol !== symbol && candles.length > 1) {
+    try {
+      const from = candles[0].time, to = candles[candles.length - 1].time;
+      const bc = (await getCandles({ market, symbol: bm.symbol, interval, bars: Math.min(MAX_BARS, candles.length + 10), completeOnly: true }))
+        .filter((c) => c.time >= from && c.time <= to);
+      pack("market", bm.label, bm.symbol, holdCurve(bc, initial));
+    } catch { /* benchmark unavailable: show the algorithm without it */ }
+  }
+  return out;
+}
 
 /** Verify a strategy on fresh server-side data. Returns the fields to store on an Algorithm. */
 export async function snapshot(strategy) {
@@ -36,6 +70,10 @@ export async function snapshot(strategy) {
         engine: v.engine, specHash: v.specHash, dataHash: v.dataHash, receiptHash: v.receiptHash, metrics: v.metrics,
         equity: equityPoints(v.result.equity, 400), trades: slimTrades(v.result.trades), openTrade: v.result.openTrade,
         from: candles[0].time, to: candles[candles.length - 1].time, bars: candles.length, verifiedAt: new Date(),
+        // Derived stats (not part of the receipt)
+        risk: riskProfile(v.result.equity, spec.interval),
+        monthly: monthlyReturns(v.result.equity),
+        benchmarks: await benchmarks(spec, candles, spec.risk.initialCapital),
       },
     },
   };
@@ -62,11 +100,15 @@ export async function refreshLive(algo) {
   try {
     const candles = await getCandles({ market: algo.market, symbol: algo.symbol, interval: algo.interval, bars, completeOnly: true });
     const lp = livePerformance(algo.spec, candles, since);
+    const liveBars = lp.started ? candles.slice(candles.length - lp.bars) : [];
     algo.live = {
       since: algo.publishedAt, started: lp.started, bars: lp.bars, metrics: lp.metrics,
+      risk: lp.started ? riskProfile(lp.equity, algo.interval) : null,
+      benchmarks: lp.started ? await benchmarks(algo, liveBars, algo.spec?.risk?.initialCapital || 10000) : [],
       equity: lp.started ? equityPoints(lp.equity, 300) : [], trades: slimTrades(lp.trades).slice(-200),
       openTrade: lp.openTrade, updatedAt: new Date(), error: undefined,
     };
+    algo.rankScore = rankScore(algo);
   } catch (err) {
     // Keep the last good result; record the problem and try again next time
     algo.live = { ...(algo.live?.toObject?.() ?? algo.live ?? {}), since: algo.publishedAt, updatedAt: new Date(), error: String(err.message || err).slice(0, 200) };
@@ -96,6 +138,7 @@ const authorView = (u) => (u ? { id: u._id, displayName: u.expert?.displayName |
 
 const pick = (m, keys) => (m ? Object.fromEntries(keys.map((k) => [k, m[k] ?? null])) : null);
 const CARD_KEYS = ["totalReturnPct", "netProfitPct", "cagrPct", "maxDrawdownPct", "totalTrades", "winRatePct", "profitFactor", "sharpe", "buyHoldPct"];
+const RISK_KEYS = ["riskAdjReturnPct", "riskAdjMaxDrawdownPct", "volatilityPct", "rating", "lowSample"];
 
 /** Listing card: results only, never the rules. */
 export function cardView(a) {
@@ -104,14 +147,19 @@ export function cardView(a) {
     market: a.market, symbol: a.symbol, interval: a.interval, direction: a.direction,
     version: a.version, publishedAt: a.publishedAt, followers: a.followers, copies: a.copies,
     author: authorView(a.author),
+    rankScore: a.rankScore ?? null,
     verified: {
       metrics: pick(a.verification?.metrics, CARD_KEYS), receiptHash: a.verification?.receiptHash,
+      risk: pick(a.verification?.risk, RISK_KEYS),
       from: a.verification?.from, to: a.verification?.to, bars: a.verification?.bars,
       spark: downsample(a.verification?.equity || [], 48).map((p) => p.value),
     },
     live: {
       started: !!a.live?.started, since: a.live?.since || a.publishedAt, updatedAt: a.live?.updatedAt,
       metrics: pick(a.live?.metrics, CARD_KEYS),
+      risk: pick(a.live?.risk, RISK_KEYS),
+      // Too little live history to rank on: fewer than 30 bars or 3 trades
+      lowSample: !hasLiveHistory(a.live),
     },
   };
 }

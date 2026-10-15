@@ -7,6 +7,9 @@ export {
   ENGINE_VERSION, LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, canonicalJson, sha256Hex, strategySpec, candleRows, rowsToCandles,
   receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance,
 } from "./verify.js";
+export {
+  TARGET_VOL_PCT, MAX_RISK_SCALE, riskProfile, riskRating, RISK_LABELS, monthlyReturns, holdCurve, marketBenchmark,
+} from "./risk.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";
 export { loadCandles, tradingViewUrl, isIntraday, QUICK_SYMBOLS } from "./candles.js";

@@ -4,13 +4,13 @@ import * as api from "../api.js";
 import { useAuth } from "../lib/auth.jsx";
 import { AlgoCard, useMarketBase, VerifiedSeal } from "../components/market/parts.jsx";
 
-const SORTS = [["followers", "Popular"], ["live", "Best live"], ["verified", "Best backtest"], ["new", "Newest"]];
+const SORTS = [["risk", "Best risk-adjusted"], ["riskBacktest", "Best risk-adjusted backtest"], ["live", "Highest live return"], ["verified", "Highest backtest return"], ["followers", "Most followed"], ["new", "Newest"]];
 const MARKETS = [["", "All markets"], ["crypto", "Crypto"], ["stocks", "Stocks"]];
 
 export default function Marketplace() {
   const { user } = useAuth();
   const { inApp } = useMarketBase();
-  const [sort, setSort] = useState("followers");
+  const [sort, setSort] = useState("risk");
   const [market, setMarket] = useState("");
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
@@ -54,6 +54,7 @@ export default function Marketplace() {
           <b>How verification works.</b> When an expert publishes, our server downloads the price history, runs the
           backtest, and freezes the rules, the data and the results with SHA-256 fingerprints. Live results only count
           trades made after the publish date, so you can see how an algorithm does on data it has never seen.
+          Rankings compare returns at the same 10% volatility, so taking more risk can't buy a top spot, and a backtest counts at half weight until the algorithm has a live record.
         </p>
       </div>
 

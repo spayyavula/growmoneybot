@@ -16,6 +16,10 @@ const verificationSchema = new mongoose.Schema({
   to: Number,
   bars: Number,
   verifiedAt: Date,
+  // Derived from the equity curve; not part of the receipt
+  risk: Mixed,
+  monthly: Mixed,
+  benchmarks: Mixed,
 }, { _id: false });
 
 // Forward performance since the publish date, refreshed from fresh market data
@@ -27,6 +31,8 @@ const liveSchema = new mongoose.Schema({
   trades: Mixed,
   openTrade: Mixed,
   bars: Number,
+  risk: Mixed,
+  benchmarks: Mixed,
   updatedAt: Date,
   error: String,
 }, { _id: false });
@@ -63,6 +69,8 @@ const algorithmSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Ranking: live risk-adjusted return once proven, otherwise the backtest's at half weight
+    rankScore: { type: Number, default: null },
     followers: { type: Number, default: 0 },
     copies: { type: Number, default: 0 },
   },
@@ -70,5 +78,6 @@ const algorithmSchema = new mongoose.Schema(
 );
 
 algorithmSchema.index({ status: 1, "live.updatedAt": 1 });
+algorithmSchema.index({ status: 1, rankScore: -1 });
 
 export default mongoose.models.Algorithm || mongoose.model("Algorithm", algorithmSchema);
