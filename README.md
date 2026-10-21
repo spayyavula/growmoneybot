@@ -44,6 +44,13 @@ builder and results sit side by side. The site is also installable as a PWA (man
 - **Slippage (optional):** `risk.slippagePct` makes entries, signal exits and stop losses fill that much worse; take profits are limit orders and fill at the target. It's off by default and only stored when set, so existing rules keep their `specHash`. TradingView sets slippage in ticks, so the Pine export notes it instead of copying it.
 - **Not simulated:** margin calls (TradingView partially closes large shorts), funding/borrow costs.
 
+### Describe a strategy (plain English → rules, backtest and Pine)
+`/app/strategies/describe`: the user types something like *"Buy Bitcoin on the 1h chart when RSI crosses above 30 and price is above the 200 EMA. Sell when RSI goes above 70. 3% stop loss."*
+- **Translation:** `POST /api/describe` sends the text to Claude (`claude-haiku-5-5` by default) with a **structured output** JSON schema (`DESCRIPTION_SCHEMA` in `packages/core/src/describe.js`), so the reply always has the rule format's shape. Set `ANTHROPIC_API_KEY` to enable it. `DESCRIBE_MODEL` and `DESCRIBE_DAILY_LIMIT` (default 50 per user per day) are optional.
+- **Fallback:** without a key, over the daily limit, or if the API fails, the built-in parser (`parseStrategyText`) reads common phrasings: crossovers, RSI/MACD/Bollinger/Stochastic/ATR levels, "and/or", stop loss, take profit, position size and capital.
+- **Validation:** whatever the translator returns goes through `fromDescriptionJson`. Unknown indicators and comparisons are dropped and listed, numbers are clamped to the engine's limits, and anything the text leaves open uses the starter defaults.
+- **Results:** the page shows how the text was read (rules, "filled in for you", "left out"), runs the normal backtest, and generates Pine Script with the normal generator. The Pine Script therefore always matches the backtest. *Save and open in the builder* keeps it.
+
 ### Guided builder (beginners)
 `/app/strategies/guided` walks a new trader through five steps and produces a complete strategy:
 1. **Market:** crypto or US stocks/ETFs, the symbol, the starting amount, and (stocks) a cash or margin account. Margin needs $2,000+.

@@ -10,6 +10,7 @@ const AppLayout = lazy(() => import("./components/app/AppLayout.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const StrategyEditor = lazy(() => import("./pages/StrategyEditor.jsx"));
 const GuidedBuilder = lazy(() => import("./pages/GuidedBuilder.jsx"));
+const DescribeStrategy = lazy(() => import("./pages/DescribeStrategy.jsx"));
 const PineLab = lazy(() => import("./pages/PineLab.jsx"));
 const Signals = lazy(() => import("./pages/Signals.jsx"));
 const Account = lazy(() => import("./pages/Account.jsx"));
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/app" element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route index element={<Dashboard />} />
           <Route path="strategies/guided" element={<GuidedBuilder />} />
+          <Route path="strategies/describe" element={<DescribeStrategy />} />
           <Route path="strategies/:id" element={<StrategyEditor />} />
           <Route path="pine" element={<PineLab />} />
           <Route path="signals" element={<Signals />} />

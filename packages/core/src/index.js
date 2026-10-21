@@ -13,6 +13,7 @@ export {
 } from "./options.js";
 export { etOffsetHours, etCloseTime } from "./marketTime.js";
 export { GUIDED_PACES, GUIDED_STYLES, GUIDED_RISK, MARGIN_MINIMUM, buildGuidedStrategy } from "./guided.js";
+export { DESCRIPTION_SCHEMA, DESCRIPTION_PROMPT, DESCRIBE_EXAMPLES, fromDescriptionJson, parseStrategyText } from "./describe.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";
 export { loadCandles, tradingViewUrl, isIntraday, QUICK_SYMBOLS } from "./candles.js";
