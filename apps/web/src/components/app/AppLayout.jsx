@@ -27,7 +27,7 @@ export default function AppLayout() {
           <span>GrowMoney<b>Bot</b></span>
         </Link>
         <nav className="app-nav-top" aria-label="Main">
-          {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.end}>{n.label === "Alerts" ? "TradingView alerts" : n.label}</NavLink>)}
+          {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.end}>{n.label}</NavLink>)}
         </nav>
         <div className="app-user">
           <span className="muted small email">{user?.email}</span>

@@ -1,9 +1,19 @@
 import mongoose from "mongoose";
 
-// One TradingView alert delivered to a user's webhook URL.
+// One alert for a user: a TradingView alert sent to their webhook URL, or a trade by a
+// marketplace algorithm they follow.
 const signalSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    source: { type: String, enum: ["tradingview", "marketplace"], default: "tradingview" },
+    // Marketplace alerts: which algorithm and version traded
+    algorithm: { type: mongoose.Schema.Types.ObjectId, ref: "Algorithm" },
+    algorithmName: { type: String, maxlength: 80 },
+    algorithmVersion: Number,
+    pending: Boolean, // signal on the last closed bar; fills at the next open
+    reason: { type: String, maxlength: 20 },
+    pnlPct: Number,
+    message: { type: String, maxlength: 300 },
     strategyId: { type: String, maxlength: 64 },
     type: { type: String, maxlength: 20 },
     action: { type: String, maxlength: 20 },

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, Linking, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { fmt, webhookUrl } from "@gmb/core";
@@ -59,7 +59,7 @@ export default function Alerts() {
       contentContainerStyle={{ padding: space.lg, paddingBottom: space.xl }}
       ListHeaderComponent={header}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.forest} />}
-      ListEmptyComponent={<Muted>{signals === null ? "Loading…" : "No alerts yet. When your TradingView alert fires, it shows up here."}</Muted>}
+      ListEmptyComponent={<Muted>{signals === null ? "Loading…" : "No alerts yet. Follow an algorithm in the marketplace to get an alert when it trades, or connect a TradingView alert."}</Muted>}
       renderItem={({ item: x }) => {
         const buy = x.action === "buy";
         return (
@@ -70,7 +70,13 @@ export default function Alerts() {
               ) : <Text style={[st.pill, { backgroundColor: colors.cream, color: colors.muted }]}>ALERT</Text>}
               <Muted small>{new Date(x.createdAt).toLocaleString()}</Muted>
             </View>
+            {x.source === "marketplace" ? (
+              <Text style={st.algo} onPress={() => x.algorithm && Linking.openURL(`${SITE_ORIGIN}/app/marketplace/${x.algorithm}`)}>
+                {x.algorithmName || "Followed algorithm"}{x.algorithmVersion ? ` v${x.algorithmVersion}` : ""}
+              </Text>
+            ) : null}
             {x.ticker ? <Text style={st.ticker}>{x.exchange ? `${x.exchange}:` : ""}{x.ticker || "—"}{x.price != null ? `  @ ${fmt.price(x.price)}` : ""}{x.interval ? `  · ${x.interval}` : ""}</Text> : null}
+            {x.source === "marketplace" && x.message ? <Muted small>{x.message}</Muted> : null}
             {!x.action && x.raw ? <Text style={[ui.mono, { fontSize: 12, color: colors.muted }]} numberOfLines={4}>{x.raw}</Text> : null}
           </View>
         );
@@ -88,4 +94,5 @@ const st = StyleSheet.create({
   buy: { backgroundColor: "#def5e8", color: "#0e6b45" },
   sell: { backgroundColor: "#fde4e1", color: "#a1291f" },
   ticker: { fontSize: 16, fontWeight: "600", color: colors.ink },
+  algo: { fontSize: 13, fontWeight: "700", color: colors.forest },
 });

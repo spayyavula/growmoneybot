@@ -42,6 +42,14 @@ export default function AlgorithmPage() {
     } catch (e) { setMsg({ state: "error", text: e.message }); }
     setBusy(false);
   };
+  const toggleAlerts = async (notify) => {
+    setBusy(true);
+    try {
+      await api.api.setAlgorithmAlerts(a._id, notify);
+      setA((cur) => ({ ...cur, access: { ...cur.access, notify } }));
+    } catch (e) { setMsg({ state: "error", text: e.message }); }
+    setBusy(false);
+  };
   const copy = async () => {
     setBusy(true);
     try {
@@ -87,6 +95,12 @@ export default function AlgorithmPage() {
             </button>
           )}
           {access.canSeeRules && user && <button className="btn btn-ghost" onClick={copy} disabled={busy}>Copy to my strategies</button>}
+          {access.following && !access.isAuthor && (
+            <label className="alert-toggle small">
+              <input type="checkbox" checked={!!access.notify} onChange={(e) => toggleAlerts(e.target.checked)} disabled={busy} />
+              <span>Alert me when it trades</span>
+            </label>
+          )}
         </div>
       </header>
       {msg.text && <p className={`form-msg ${msg.state}`}>{msg.text}</p>}

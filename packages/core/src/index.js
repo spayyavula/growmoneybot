@@ -5,7 +5,7 @@ export { computeOperand, operandKey, ruleSeries, sourceSeries } from "./evaluate
 export { runBacktest, computeMetrics, tradingDay, settlementSummary } from "./backtest.js";
 export {
   ENGINE_VERSION, LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, canonicalJson, sha256Hex, strategySpec, candleRows, rowsToCandles,
-  receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance,
+  receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance, liveEvents,
 } from "./verify.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";

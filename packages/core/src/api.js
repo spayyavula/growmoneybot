@@ -80,6 +80,7 @@ export function createApi({ baseUrl = "/api", getToken = () => null, onUnauthori
     republishAlgorithm: (id, body) => request(`/marketplace/${id}/republish`, { method: "POST", body }),
     followAlgorithm: (id) => request(`/marketplace/${id}/follow`, { method: "POST" }),
     unfollowAlgorithm: (id) => request(`/marketplace/${id}/follow`, { method: "DELETE" }),
+    setAlgorithmAlerts: (id, notify) => request(`/marketplace/${id}/follow`, { method: "PUT", body: { notify } }),
     copyAlgorithm: (id) => request(`/marketplace/${id}/copy`, { method: "POST" }),
     getAlgorithmDataset: (id) => request(`/marketplace/${id}/dataset`),
 

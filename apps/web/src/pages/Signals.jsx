@@ -32,14 +32,14 @@ export default function Signals() {
     <div>
       <div className="page-head">
         <div>
-          <h1>TradingView alerts</h1>
-          <p className="muted small">Alerts your TradingView strategies send here. Updates every 30 seconds.</p>
+          <h1>Alerts</h1>
+          <p className="muted small">Trades by marketplace algorithms you follow, and alerts your TradingView strategies send here. Updates every 30 seconds.</p>
         </div>
         <button className="btn btn-ghost btn-small" onClick={load}>Refresh</button>
       </div>
 
       <section className="panel">
-        <h3>Your webhook URL</h3>
+        <h3>Your TradingView webhook URL</h3>
         <div className="copy-row">
           <code className="break">{url}</code>
           <button className="btn btn-small" onClick={copy}>{copied ? "Copied!" : "Copy URL"}</button>
@@ -58,7 +58,12 @@ export default function Signals() {
         </div>
         {error && <p className="form-msg error">{error}</p>}
         {signals === null && !error && <p className="muted">Loading…</p>}
-        {signals?.length === 0 && <p className="muted">No alerts yet. Once your TradingView alert fires, it shows up here.</p>}
+        {signals?.length === 0 && (
+          <p className="muted">
+            No alerts yet. Follow an algorithm in the <Link to="/app/marketplace">marketplace</Link> to get an alert
+            whenever it enters or exits a trade, or connect a TradingView alert with the URL above.
+          </p>
+        )}
         {signals?.length > 0 && (
           <div className="table-wrap">
             <table className="table">
@@ -71,7 +76,14 @@ export default function Signals() {
                     <td data-label="Ticker">{s.exchange ? `${s.exchange}:` : ""}{s.ticker || "—"}</td>
                     <td data-label="Price">{s.price != null ? fmt.price(s.price) : "—"}</td>
                     <td data-label="Interval">{s.interval || "—"}</td>
-                    <td data-label="Message" className="raw full"><code>{s.raw}</code></td>
+                    <td data-label="Message" className="raw full">
+                      {s.source === "marketplace" ? (
+                        <span className="small">
+                          <Link to={`/app/marketplace/${s.algorithm}`}><b>{s.algorithmName || "Followed algorithm"}</b></Link>
+                          {s.algorithmVersion ? <span className="muted"> v{s.algorithmVersion}</span> : null} · {s.message}
+                        </span>
+                      ) : <code>{s.raw}</code>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
