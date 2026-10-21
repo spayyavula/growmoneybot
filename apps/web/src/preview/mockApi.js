@@ -53,7 +53,10 @@ function sessionTimes(interval, count) {
   return out;
 }
 
+// Seeds picked so the sample paths look like their markets (no crash-to-zero by chance)
+export const SEED = { "crypto:BTCUSDT:1h": "1", "crypto:BTCUSDT:1d": "4", "crypto:ETHUSDT:1w": "2" };
 const candleCache = new Map();
+export const clearSampleCache = () => candleCache.clear();
 export function sampleCandles({ market, symbol, interval, bars }) {
   const key = `${market}:${symbol}:${interval}`;
   const want = Math.min(5000, Math.max(50, Number(bars) || 1000));
@@ -64,16 +67,20 @@ export function sampleCandles({ market, symbol, interval, bars }) {
     const times = market === "stocks"
       ? sessionTimes(interval, n)
       : Array.from({ length: n }, (_, i) => Math.floor(nowSec() / step) * step - (n - i) * step);
-    const r = rng(key);
+    const r = rng(key + (SEED[key] ?? ""));
     const perHour = market === "stocks" ? 0.0035 : 0.007;
     const vol = perHour * Math.sqrt(Math.min(step, market === "stocks" && step >= 86400 ? 6.5 * 3600 * (step / 86400) : step) / 3600);
-    let p = (BASE[symbol] ?? 100) * 0.7;
+    // Log-normal walk: a modest long-run drift (stocks ~8%/yr, crypto ~20%/yr) plus slow regimes
+    // Fraction of a year per bar (intraday stock bars only cover the 6.5-hour session, 252 days a year)
+    const years = market === "stocks" && step < 86400 ? step / (252 * 6.5 * 3600) : step / (365 * 86400);
+    const mu = (market === "stocks" ? 0.08 : 0.2) * years;
+    let p = BASE[symbol] ?? 100;
     let drift = 0;
     all = times.map((time, i) => {
-      if (i % 120 === 0) drift = (r() - 0.45) * vol * 0.35; // regimes: trends come and go
+      if (i % 120 === 0) drift = (r() - 0.5) * vol * 0.1; // regimes: trends come and go, gently
       const o = p;
       const z = (r() + r() + r() - 1.5) * 2; // ~normal
-      p = Math.max(o * 0.5, o * (1 + drift + z * vol));
+      p = o * Math.exp(mu + drift + z * vol);
       const hi = Math.max(o, p) * (1 + r() * vol * 0.6);
       const lo = Math.min(o, p) * (1 - r() * vol * 0.6);
       return { time, open: o, high: hi, low: lo, close: p, volume: Math.round(1000 + r() * 9000) };
