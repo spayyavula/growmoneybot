@@ -60,6 +60,8 @@ a.byline:hover { color: var(--accent); }
 .lead-sm { font-size: 1.08rem; color: var(--label-2); margin: 0 0 8px; max-width: 40em; }
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .algo-actions { display: grid; gap: 8px; align-content: start; }
+.alert-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.alert-toggle input { width: 18px; height: 18px; accent-color: var(--pos); }
 .kpi-row { display: grid; gap: 10px; margin-bottom: 16px; }
 .kpi { background: var(--bg-elev); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; box-shadow: var(--shadow-sm); }
 .kpi-label { font-size: 0.78rem; font-weight: 500; color: var(--label-2); }

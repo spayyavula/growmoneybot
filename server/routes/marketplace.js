@@ -47,8 +47,9 @@ async function viewer(req) {
 async function accessFor(req, algo) {
   const { user, isAdmin } = await viewer(req);
   const isAuthor = !!user && String(algo.author?._id ?? algo.author) === String(user._id);
-  const following = !!user && !!(await Follow.exists({ user: user._id, algorithm: algo._id }));
-  return { user, isAdmin, isAuthor, following, canSeeRules: isAuthor || isAdmin || following };
+  const follow = user ? await Follow.findOne({ user: user._id, algorithm: algo._id }).select("notify").lean() : null;
+  const following = !!follow;
+  return { user, isAdmin, isAuthor, following, notify: following && follow.notify !== false, canSeeRules: isAuthor || isAdmin || following };
 }
 
 // ---- Browse --------------------------------------------------------------
@@ -199,7 +200,19 @@ router.post("/:id/follow", requireAuth, wrap(async (req, res) => {
   } catch (err) {
     if (err.code !== 11000) throw err; // already following
   }
-  res.json({ ok: true, following: true });
+  res.json({ ok: true, following: true, notify: true });
+}));
+
+// Turn trade alerts for one followed algorithm on or off
+router.put("/:id/follow", requireAuth, wrap(async (req, res) => {
+  if (!validId(req.params.id)) return notFound(res);
+  if (typeof req.body?.notify !== "boolean") return res.status(400).json({ ok: false, error: "notify must be true or false" });
+  await connectDB();
+  const follow = await Follow.findOneAndUpdate(
+    { user: req.userId, algorithm: req.params.id }, { $set: { notify: req.body.notify } }, { new: true }
+  ).lean();
+  if (!follow) return res.status(404).json({ ok: false, error: "You don't follow this algorithm" });
+  res.json({ ok: true, following: true, notify: follow.notify });
 }));
 
 router.delete("/:id/follow", requireAuth, wrap(async (req, res) => {

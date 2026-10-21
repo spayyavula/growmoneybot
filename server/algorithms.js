@@ -7,6 +7,8 @@ import {
 import Algorithm from "./models/Algorithm.js";
 import AlgoDataset from "./models/AlgoDataset.js";
 import { getCandles, INTERVAL_SECONDS, MAX_BARS } from "./marketData.js";
+import { initialWatermark, selectNewEvents } from "./liveEvents.js";
+import { alertFollowers } from "./followerAlerts.js";
 
 export class PublishError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
@@ -53,26 +55,55 @@ export async function saveDataset(algorithmId, version, dataHash, rows) {
 export const liveTtlMs = (interval) => Math.min(6 * 3600, Math.max(900, INTERVAL_SECONDS[interval] || 86400)) * 1000;
 export const isLiveStale = (algo) => !algo.live?.updatedAt || Date.now() - new Date(algo.live.updatedAt).getTime() > liveTtlMs(algo.interval);
 
-/** Recompute forward performance since the current version's publish date. */
+/**
+ * Recompute forward performance since the current version's publish date, and alert
+ * followers about trades the algorithm made since the last refresh.
+ */
 export async function refreshLive(algo) {
   const since = Math.floor(new Date(algo.publishedAt).getTime() / 1000);
   const step = INTERVAL_SECONDS[algo.interval] || 86400;
   const barsSince = Math.ceil((Date.now() / 1000 - since) / step);
   const bars = Math.min(MAX_BARS, LIVE_WARMUP_BARS + barsSince + 2);
+  const prev = algo.live?.toObject?.() ?? algo.live ?? {};
+  let fresh = [];
+  let claimed = false;
   try {
     const candles = await getCandles({ market: algo.market, symbol: algo.symbol, interval: algo.interval, bars, completeOnly: true });
     const lp = livePerformance(algo.spec, candles, since);
+
+    const watermark = initialWatermark(prev, since, step);
+    const sel = selectNewEvents(lp.events, { watermark, nowSec: Math.floor(Date.now() / 1000), stepSec: step });
+    if (sel.watermark > watermark) {
+      // Claim these events atomically: a page view and the scheduled refresh can run at the
+      // same time, and only the one that moves the watermark sends the alerts.
+      const r = await Algorithm.updateOne(
+        { _id: algo._id, version: algo.version, $or: [{ "live.notifiedThrough": { $exists: false } }, { "live.notifiedThrough": { $lt: sel.watermark } }] },
+        { $set: { "live.notifiedThrough": sel.watermark } }
+      );
+      claimed = r.modifiedCount === 1;
+      if (claimed) fresh = sel.fresh;
+    }
+
     algo.live = {
       since: algo.publishedAt, started: lp.started, bars: lp.bars, metrics: lp.metrics,
       equity: lp.started ? equityPoints(lp.equity, 300) : [], trades: slimTrades(lp.trades).slice(-200),
       openTrade: lp.openTrade, updatedAt: new Date(), error: undefined,
+      notifiedThrough: Math.max(sel.watermark, Number.isFinite(prev.notifiedThrough) ? prev.notifiedThrough : -Infinity),
     };
   } catch (err) {
     // Keep the last good result; record the problem and try again next time
-    algo.live = { ...(algo.live?.toObject?.() ?? algo.live ?? {}), since: algo.publishedAt, updatedAt: new Date(), error: String(err.message || err).slice(0, 200) };
+    algo.live = { ...prev, since: algo.publishedAt, updatedAt: new Date(), error: String(err.message || err).slice(0, 200) };
   }
   algo.markModified("live");
   await algo.save();
+
+  if (fresh.length && algo.status === "published") {
+    try {
+      await alertFollowers(algo, fresh);
+    } catch (err) {
+      console.error("Follower alerts failed", String(algo._id), err.message);
+    }
+  }
   return algo;
 }
 
@@ -117,7 +148,7 @@ export function cardView(a) {
 }
 
 /** Full page. Rules are included only when `canSeeRules`. */
-export function detailView(a, { canSeeRules = false, following = false, isAuthor = false, isAdmin = false } = {}) {
+export function detailView(a, { canSeeRules = false, following = false, notify = false, isAuthor = false, isAdmin = false } = {}) {
   return {
     ...cardView(a),
     description: a.description,
@@ -126,6 +157,6 @@ export function detailView(a, { canSeeRules = false, following = false, isAuthor
     live: { ...(a.live?.toObject?.() ?? a.live ?? {}), since: a.live?.since || a.publishedAt },
     history: a.history,
     rules: canSeeRules ? a.spec : null,
-    access: { following, isAuthor, isAdmin, canSeeRules },
+    access: { following, notify, isAuthor, isAdmin, canSeeRules },
   };
 }

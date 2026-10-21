@@ -29,6 +29,7 @@ const liveSchema = new mongoose.Schema({
   bars: Number,
   updatedAt: Date,
   error: String,
+  notifiedThrough: Number, // key (bar time, unix s) of the newest trade event already alerted to followers
 }, { _id: false });
 
 const algorithmSchema = new mongoose.Schema(
