@@ -371,3 +371,18 @@ code.break { background: var(--bg); padding: 10px 12px; border-radius: 10px; fon
 }
 @media (min-width: 900px) { .guided-nav { bottom: 16px; } }
 @media (prefers-reduced-motion: reduce) { .choice { transition: none; } }
+
+/* Describe a strategy */
+.describe { display: grid; gap: 14px; }
+.describe-head h1 { margin: 6px 0 4px; text-wrap: balance; }
+.describe-head p { margin: 0; max-width: 65ch; }
+.describe-input { display: grid; gap: 10px; max-width: 860px; }
+.describe-input textarea { width: 100%; min-height: 120px; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; }
+.describe-examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.describe-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.describe-h2 { margin: 0 0 4px; font-size: 1.1rem; }
+.describe-list { margin: 4px 0 12px; padding-left: 1.2em; display: grid; gap: 4px; font-size: 0.86rem; max-width: 65ch; }
+.describe-list.warn li::marker { color: var(--warn); }
+.describe-grid { display: grid; gap: 14px; }
+.describe-grid > * { min-width: 0; }
+@media (min-width: 1100px) { .describe-grid { grid-template-columns: minmax(320px, 2fr) 3fr; align-items: start; } }

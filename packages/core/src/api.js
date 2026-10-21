@@ -91,6 +91,7 @@ export function createApi({ baseUrl = "/api", getToken = () => null, onUnauthori
     adminRemoveAlgorithm: (id, reason) => request(`/admin/algorithms/${id}/remove`, { method: "POST", body: { reason } }),
     adminRestoreAlgorithm: (id) => request(`/admin/algorithms/${id}/restore`, { method: "POST" }),
 
+    describeStrategy: (body) => request("/describe", { method: "POST", body }),
     listSignals: (strategyId) => request(`/signals${strategyId ? `?${q({ strategyId })}` : ""}`),
     clearSignals: () => request("/signals", { method: "DELETE" }),
   };

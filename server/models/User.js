@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     notifyOnSignals: { type: Boolean, default: true },
+    // AI strategy translations used today (see routes/describe.js)
+    describeUsage: { day: String, count: { type: Number, default: 0 } },
     // Expert program: traders apply, an admin approves, then they can publish to the marketplace
     expert: {
       status: { type: String, enum: ["none", "pending", "approved", "rejected", "revoked"], default: "none", index: true },
