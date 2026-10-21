@@ -69,6 +69,7 @@ stop loss and take profit.
 | POST | `/api/marketplace` | approved expert | `{ strategyId, summary, description?, tags? }` → server re-runs and publishes |
 | PUT · POST | `/api/marketplace/:id` · `/:id/republish` | author | Edit listing / list-unlist · publish a new version |
 | POST/DELETE | `/api/marketplace/:id/follow` | ✓ | Follow / unfollow |
+| PUT | `/api/marketplace/:id/follow` | follower | `{ notify }` — trade alerts for this algorithm on/off |
 | POST · GET | `/api/marketplace/:id/copy` · `/:id/dataset` | follower | Copy rules into my strategies · frozen dataset for re-checking |
 | GET · POST · PUT | `/api/experts/me` · `/apply` · `/me` | ✓ | Expert program status, application, profile |
 | GET | `/api/experts/:id` | — | Public expert profile + published algorithms |
@@ -80,10 +81,11 @@ Approved expert traders publish algorithms; anyone can browse the results, and f
 
 - **Experts are approved by hand.** Traders apply from *Account → Expert program*. Admins (emails in `ADMIN_EMAILS`) review applications at `/app/admin`.
 - **Results are verified, not uploaded.** On publish the server fetches the price history itself (completed bars only), runs the shared backtest engine, and stores the frozen rules, the exact dataset and a receipt: SHA-256 fingerprints of the rules (`specHash`), the data (`dataHash`) and `{ engine, specHash, dataHash, metrics }` (`receiptHash`). CSV data can't be published, and a backtest needs at least 10 closed trades.
-- **Live track record.** From the publish date, only trades the rules enter after publishing count (indicators warm up on earlier bars). It refreshes when the page is viewed and hourly via the scheduled function `netlify/functions/refresh-live.mjs`.
+- **Live track record.** From the publish date, only trades the rules enter after publishing count (indicators warm up on earlier bars). It refreshes when the page is viewed and every 15 minutes via the scheduled function `netlify/functions/refresh-live.mjs` (at :02, :17, :32, :47) — but only for algorithms where a new bar should have closed since the last refresh, so nothing is fetched while no new data can exist.
+- **Followers get trade alerts.** When the live refresh finds that a followed algorithm entered or exited a trade, each follower gets an entry on their Alerts page and a push notification (if *Alert notifications* is on). A rule signal is sent as soon as its bar closes ("enters at the next open"); stop loss / take profit when hit. `live.notifiedThrough` records the newest bar already alerted and is claimed atomically, so the hourly job and a page view never both send. Followers can mute one algorithm with *Alert me when it trades*. Alerts older than two bars (at least a day) are skipped. Alerts arrive within about 15 minutes of the bar closing, on every timeframe.
 - **New versions don't erase history.** Publishing changed rules creates a new version, restarts live tracking, and keeps the old version's verified and live results in the algorithm's history.
 - **Anyone following can re-check.** The algorithm page downloads the frozen dataset and re-runs `verifyBacktest` from `@gmb/core` in the browser, then compares all fingerprints and metrics.
-- **Not in this version:** paid subscriptions and revenue sharing for experts, and live signal delivery for algorithms whose rules stay private.
+- **Not in this version:** paid subscriptions and revenue sharing for experts, and trade alerts for people who don't follow an algorithm.
 
 ## 1. Accounts you need
 
@@ -105,6 +107,7 @@ npm install              # installs every workspace (web, mobile, core, server)
 npm install -g netlify-cli
 npm run dev              # web + API at http://localhost:8888
 npm run dev:mobile       # Expo dev server for the phone app (separate terminal)
+npm test                 # unit tests (node:test)
 ```
 
 ## 3. Deploy to Netlify

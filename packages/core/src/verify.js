@@ -110,7 +110,7 @@ export const receiptHashOf = ({ engine, specHash, dataHash, metrics }) =>
 export function livePerformance(strategy, candles, since) {
   const spec = strategySpec(strategy);
   const start = candles.findIndex((c) => c.time >= since);
-  if (start < 0 || start >= candles.length - 1) return { started: false, bars: 0, metrics: null, equity: [], trades: [], openTrade: null };
+  if (start < 0 || start >= candles.length - 1) return { started: false, bars: 0, metrics: null, equity: [], trades: [], openTrade: null, events: [] };
   const result = runBacktest(candles, spec, { tradeFrom: since });
   const bars = candles.slice(start);
   const equity = result.equity.slice(start);
@@ -118,5 +118,56 @@ export function livePerformance(strategy, candles, since) {
     { ...computeMetrics({ bars, trades: result.trades, equity, risk: spec.risk, interval: spec.interval }), openPnl: result.openTrade?.unrealizedPnl ?? 0 },
     spec.risk.initialCapital
   );
-  return { started: true, bars: bars.length, metrics, equity, trades: result.trades, openTrade: result.openTrade };
+  return {
+    started: true, bars: bars.length, metrics, equity, trades: result.trades, openTrade: result.openTrade,
+    events: liveEvents(candles, result, spec.direction, since),
+  };
+}
+
+/**
+ * Trading events (entries and exits) from a live run, for alerting followers.
+ *
+ * Each event has a `key`: the unix time of the completed bar that triggered it — the signal bar
+ * for rule-based entries and exits (the order fills at the next bar's open), or the bar where a
+ * stop loss / take profit was hit. A signal on the newest completed bar has no fill yet
+ * (`pending: true`); once it fills, the trade carries the same key, so an alert sent for the
+ * pending signal is never sent twice.
+ *
+ * Sorted by key; on the same bar an exit comes before an entry.
+ */
+export function liveEvents(candles, result, direction = "long", since = 0) {
+  const index = new Map(candles.map((c, i) => [c.time, i]));
+  const signalBar = (fillTime) => {
+    const i = index.get(fillTime);
+    return i > 0 ? candles[i - 1].time : fillTime;
+  };
+  const enter = direction === "short" ? "sell" : "buy";
+  const leave = direction === "short" ? "buy" : "sell";
+  const events = [];
+
+  const entryOf = (t) => ({
+    key: signalBar(t.entryTime), type: "entry", action: enter, pending: false,
+    time: t.entryTime, price: round(t.entryPrice), reason: "signal",
+  });
+  for (const t of result.trades || []) {
+    events.push(entryOf(t));
+    events.push({
+      key: t.reason === "signal" ? signalBar(t.exitTime) : t.exitTime, type: "exit", action: leave, pending: false,
+      time: t.exitTime, price: round(t.exitPrice), reason: t.reason, pnlPct: round(t.pnlPct),
+    });
+  }
+  if (result.openTrade) events.push(entryOf(result.openTrade));
+
+  // Signals on the newest completed bar: the backtest can't fill them yet, so report them as pending
+  const last = candles.length - 1;
+  const bar = candles[last];
+  if (bar && result.signals) {
+    const pendingEvent = (type, action) => ({
+      key: bar.time, type, action, pending: true, time: null, price: round(bar.close), reason: "signal",
+    });
+    if (result.openTrade && result.signals.exit?.[last]) events.push(pendingEvent("exit", leave));
+    else if (!result.openTrade && result.signals.entry?.[last] && bar.time >= since) events.push(pendingEvent("entry", enter));
+  }
+
+  return events.sort((a, b) => a.key - b.key || (a.type === b.type ? 0 : a.type === "exit" ? -1 : 1));
 }
