@@ -44,6 +44,16 @@ builder and results sit side by side. The site is also installable as a PWA (man
 - **Slippage (optional):** `risk.slippagePct` makes entries, signal exits and stop losses fill that much worse; take profits are limit orders and fill at the target. It's off by default and only stored when set, so existing rules keep their `specHash`. TradingView sets slippage in ticks, so the Pine export notes it instead of copying it.
 - **Not simulated:** margin calls (TradingView partially closes large shorts), funding/borrow costs.
 
+### Options overlay (estimated prices)
+For US stocks and ETFs, a strategy can **trade as options**: the entry and exit rules still run on the stock, and each trade opens an options position instead of shares.
+- **Positions:** a bull call debit spread or long call for long strategies; a bear put debit spread or long put for short ones. All are defined-risk: a trade can lose at most the premium paid.
+- **Choosing contracts:** the bought leg by delta (0.5 ≈ at the money), spreads by dollar width (default $2), and expiry as the first Friday at least *N* days out (default 30).
+- **Sizing:** as many contracts as fit in *max premium per trade* (default 25% of equity). Entries where one contract costs more are skipped and counted, and the results suggest a narrower spread or cheaper stock.
+- **Exits:** the exit rule (filled at the next open), take profit / stop loss as % of the premium (checked at the close), or expiry. At expiry the position settles at intrinsic value.
+- **Pricing (`packages/core/src/options.js`):** Black-Scholes with implied vol = the stock's realized vol over the last 20 trading days × 1.1 (never including the current day), a 4% rate, a bid-ask spread of 2% of each leg's price (min $0.02 wide), and $0.65 per contract per leg each way. All of these are adjustable. **Results are estimates**, labeled as such: real prices also depend on implied volatility, skew and liquidity.
+- **Results:** the same metrics and cost check (gain on the premium before costs vs fees + bid-ask), plus what the rules would open at the latest close, with legs, cost, max loss/profit, breakeven and a payoff-at-expiry chart.
+- **Not in this version:** options strategies can't be published to the marketplace, since their results aren't verified prices. TradingView can't trade options, so the Pine export trades the stock on the same signals with a note. Mobile runs options backtests; options settings are edited on the web.
+
 ### Small-account mode
 Built for retail traders with a few hundred dollars:
 - **Default:** new strategies and templates start from the crypto low-fee preset ($500, 95% per trade, 0.1% fees, 0.05% slippage). Strategies saved earlier keep their own settings.

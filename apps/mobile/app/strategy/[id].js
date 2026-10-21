@@ -188,6 +188,12 @@ export default function StrategyScreen() {
               <RuleEditor title="Entry" hint="Checked at each bar's close. Orders fill at the next bar's open." group={s.entry} onChange={(entry) => set({ entry })} />
               <RuleEditor title="Exit" hint="Leave empty to exit only with the stop loss or take profit." group={s.exit} onChange={(exit) => set({ exit })} />
 
+              {s.instrument === "options" && (
+                <Note>
+                  This strategy trades options: each signal opens {s.options?.structure === "single" ? "a long call or put" : "a debit spread"}.
+                  Backtests run here; change the options settings on the web. Option prices are model estimates.
+                </Note>
+              )}
               <SectionTitle>Risk & costs</SectionTitle>
               <Select
                 label="Small account preset" value="" title="Small account preset"

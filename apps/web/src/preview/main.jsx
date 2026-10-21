@@ -19,7 +19,7 @@ if (!window.location.hash || window.location.hash === "#/") window.location.hash
 function PreviewBar() {
   return (
     <div className="preview-bar" role="note">
-      <b>Preview</b> · PRs #3 + #4 · sample prices, nothing is saved ·{" "}
+      <b>Preview</b> · PRs #3 + #4 + #5 · sample prices, nothing is saved ·{" "}
       <a href="#/app/strategies/new">Builder</a> · <a href="#/app/marketplace">Marketplace</a> · <a href="#/app/signals">Alerts</a>
     </div>
   );

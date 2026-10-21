@@ -110,6 +110,17 @@ const strategies = [
     }),
     _id: id(), createdAt: stamp(), updatedAt: stamp(),
   },
+  {
+    // Options overlay: the same daily EMA rules, traded as $2-wide bull call spreads on a $1,000 account
+    ...normalizeStrategy({
+      ...TEMPLATES[0].build(), name: "SPY spreads, EMA signals ($1,000)", market: "stocks", symbol: "SPY", interval: "1d", bars: 1000,
+      entry: { logic: "all", conditions: [{ left: { type: "ema", params: { source: "close", length: 10 } }, op: "crossesAbove", right: { type: "ema", params: { source: "close", length: 30 } } }] },
+      exit: { logic: "any", conditions: [{ left: { type: "ema", params: { source: "close", length: 10 } }, op: "crossesBelow", right: { type: "ema", params: { source: "close", length: 30 } } }] },
+      instrument: "options", options: { structure: "spread", spreadWidth: 2, delta: 0.5, dte: 30 },
+      risk: { initialCapital: 1000, positionSizePct: 95, feePct: 0, stopLossPct: 0, takeProfitPct: 0 },
+    }),
+    _id: id(), createdAt: stamp(), updatedAt: stamp(),
+  },
 ];
 const pine = [];
 let signals = [];
@@ -248,7 +259,7 @@ async function handle(method, path, query, body) {
   if (a0 === "strategies") {
     if (!a1) {
       if (method === "GET") return ok({ strategies });
-      const s = { ...normalizeStrategy(body), _id: id(), createdAt: stamp(), updatedAt: stamp() };
+      const s = { ...normalizeStrategy(body.instrument === "shares" ? { ...body, instrument: undefined } : body), _id: id(), createdAt: stamp(), updatedAt: stamp() };
       strategies.unshift(s);
       return ok({ strategy: s }, 201);
     }
@@ -256,7 +267,12 @@ async function handle(method, path, query, body) {
     if (i < 0) return fail(404, "Strategy not found");
     if (a2 === "backtest") { strategies[i].lastBacktest = { metrics: body.metrics, ranAt: stamp() }; return ok({}); }
     if (method === "GET") return ok({ strategy: strategies[i] });
-    if (method === "PUT") { strategies[i] = { ...strategies[i], ...normalizeStrategy({ ...strategies[i], ...body }), updatedAt: stamp() }; return ok({ strategy: strategies[i] }); }
+    if (method === "PUT") {
+      const next = { ...strategies[i], ...body };
+      if (body.instrument === "shares") { delete next.instrument; delete next.options; }
+      strategies[i] = { ...normalizeStrategy(next), _id: strategies[i]._id, createdAt: strategies[i].createdAt, updatedAt: stamp() };
+      return ok({ strategy: strategies[i] });
+    }
     if (method === "DELETE") { strategies.splice(i, 1); return ok({}); }
   }
 
