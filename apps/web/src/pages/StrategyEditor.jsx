@@ -120,6 +120,7 @@ export default function StrategyEditor() {
       <div className="editor-head">
         <div style={{ flex: 1, minWidth: 0 }}>
           <Link to="/app" className="muted small">← Strategies</Link>
+          {isNew && <Link to="/app/strategies/guided" className="small guided-link">New to this? Use the guided setup</Link>}
           <input className="title-input" value={s.name} maxLength={80} onChange={(e) => set({ name: e.target.value })} aria-label="Strategy name" />
         </div>
         {isNew && (
