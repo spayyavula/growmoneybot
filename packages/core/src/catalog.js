@@ -131,7 +131,7 @@ export function normalizeStrategy(s) {
     entry: fixGroup(s.entry),
     exit: fixGroup(s.exit),
     risk: {
-      initialCapital: clamp(r.initialCapital, 1, 1e12, 10000),
+      initialCapital: clamp(r.initialCapital, 1, 1e12, 500),
       positionSizePct: clamp(r.positionSizePct, 1, 100, 95),
       feePct: clamp(r.feePct, 0, 10, 0.1),
       stopLossPct: clamp(r.stopLossPct, 0, 100, 0),
@@ -152,7 +152,7 @@ export const SMALL_ACCOUNT_PRESETS = [
   {
     key: "crypto-low", market: "crypto", label: "Crypto · low-fee exchange",
     note: "About 0.1% per side, e.g. a low-fee pair or a maker-fee order.",
-    risk: { initialCapital: 500, positionSizePct: 95, feePct: 0.1, slippagePct: 0.05 },
+    risk: { initialCapital: 500, positionSizePct: 95, feePct: 0.1, slippagePct: 0.05 }, // = STARTER_RISK
   },
   {
     key: "crypto-retail", market: "crypto", label: "Crypto · retail fee tier",
@@ -221,6 +221,10 @@ export function smallAccountFit(trades, market) {
   return { friendly: avgMovePct >= 2 * cost, avgMovePct, roundTripCostPct: cost };
 }
 
+// New strategies start from the "Crypto · low-fee exchange" small-account preset:
+// $500, 95% per trade, 0.1% fees and 0.05% slippage per side.
+export const STARTER_RISK = { initialCapital: 500, positionSizePct: 95, feePct: 0.1, slippagePct: 0.05, stopLossPct: 0, takeProfitPct: 0 };
+
 export function defaultStrategy() {
   return {
     name: "EMA crossover",
@@ -242,7 +246,7 @@ export function defaultStrategy() {
         { left: { type: "ema", params: { source: "close", length: 20 } }, op: "crossesBelow", right: { type: "ema", params: { source: "close", length: 50 } } },
       ],
     },
-    risk: { initialCapital: 10000, positionSizePct: 95, feePct: 0.1, stopLossPct: 0, takeProfitPct: 0 },
+    risk: { ...STARTER_RISK },
   };
 }
 
@@ -255,7 +259,7 @@ export const TEMPLATES = [
       name: "RSI oversold bounce",
       entry: { logic: "all", conditions: [{ left: { type: "rsi", params: { source: "close", length: 14 } }, op: "crossesAbove", right: { type: "value", params: { value: 30 } } }] },
       exit: { logic: "any", conditions: [{ left: { type: "rsi", params: { source: "close", length: 14 } }, op: "crossesAbove", right: { type: "value", params: { value: 70 } } }] },
-      risk: { initialCapital: 10000, positionSizePct: 95, feePct: 0.1, stopLossPct: 5, takeProfitPct: 0 },
+      risk: { ...STARTER_RISK, stopLossPct: 5 },
     }),
   },
   {
@@ -280,7 +284,7 @@ export const TEMPLATES = [
       name: "Bollinger Band reversion",
       entry: { logic: "all", conditions: [{ left: { type: "price", params: { source: "close" } }, op: "crossesBelow", right: { type: "bb", params: { source: "close", length: 20, mult: 2 }, field: "lower" } }] },
       exit: { logic: "any", conditions: [{ left: { type: "price", params: { source: "close" } }, op: "crossesAbove", right: { type: "bb", params: { source: "close", length: 20, mult: 2 }, field: "middle" } }] },
-      risk: { initialCapital: 10000, positionSizePct: 95, feePct: 0.1, stopLossPct: 8, takeProfitPct: 0 },
+      risk: { ...STARTER_RISK, stopLossPct: 8 },
     }),
   },
 ];

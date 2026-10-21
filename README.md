@@ -46,6 +46,7 @@ builder and results sit side by side. The site is also installable as a PWA (man
 
 ### Small-account mode
 Built for retail traders with a few hundred dollars:
+- **Default:** new strategies and templates start from the crypto low-fee preset ($500, 95% per trade, 0.1% fees, 0.05% slippage). Strategies saved earlier keep their own settings.
 - **Presets** under *Risk & costs*: crypto low-fee (0.1%) and retail-tier (0.6%) exchanges, stock cash account ($500) and margin account ($2,000). Each sets capital, fees and 0.05% slippage and keeps stops/targets.
 - **Cost check** in results: the average price move a trade captures (before costs) against the round-trip cost (fees + slippage, both sides). Under 1× the strategy loses money after costs at any account size; under 2× is flagged as thin. Fees and slippage paid are shown in dollars.
 - **Cash-account settlement (stocks):** with *Cash account* selected, results flag good-faith violations — positions bought with unsettled sale proceeds (T+1) and sold the same day — and warn when three fall within 12 months, which normally restricts the account for 90 days. Trading days use US Eastern time with daylight saving.

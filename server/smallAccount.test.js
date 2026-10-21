@@ -27,16 +27,30 @@ function sessions(days) {
   return out;
 }
 
+// Risk settings as every strategy had them before small-account mode
+const LEGACY_RISK = { initialCapital: 10000, positionSizePct: 95, feePct: 0.1, stopLossPct: 0, takeProfitPct: 0 };
+
 test("rules saved before small-account mode hash exactly as before", () => {
-  for (const s of [defaultStrategy(), ...TEMPLATES.map((t) => t.build())]) {
+  for (const t of TEMPLATES) {
+    const s = { ...t.build(), risk: { ...LEGACY_RISK, stopLossPct: t.build().risk.stopLossPct } };
     const spec = strategySpec(s);
-    assert.equal("slippagePct" in spec.risk, false);
+    assert.deepEqual(Object.keys(spec.risk), ["initialCapital", "positionSizePct", "feePct", "stopLossPct", "takeProfitPct"]);
     assert.equal("account" in spec, false);
     assert.equal(canonicalJson(strategySpec({ ...s, risk: { ...s.risk, slippagePct: 0 } })), canonicalJson(spec));
+    // a cash/margin choice never changes the rules
+    assert.equal(canonicalJson(strategySpec({ ...s, account: "cash" })), canonicalJson(spec));
   }
-  // and a cash/margin choice never changes the rules
-  const s = defaultStrategy();
-  assert.equal(canonicalJson(strategySpec({ ...s, account: "cash" })), canonicalJson(strategySpec(s)));
+});
+
+test("new strategies start from the $500 low-fee crypto preset", () => {
+  const preset = SMALL_ACCOUNT_PRESETS.find((p) => p.key === "crypto-low").risk;
+  for (const t of TEMPLATES) {
+    const s = normalizeStrategy(t.build());
+    assert.equal(s.market, "crypto");
+    for (const k of Object.keys(preset)) assert.equal(s.risk[k], preset[k], `${t.name} ${k}`);
+  }
+  assert.deepEqual([TEMPLATES[1].build().risk.stopLossPct, TEMPLATES[3].build().risk.stopLossPct], [5, 8]); // templates keep their stops
+  assert.equal(normalizeStrategy({ ...defaultStrategy(), risk: { initialCapital: "" } }).risk.initialCapital, 500); // cleared field
 });
 
 test("zero slippage leaves every trade unchanged", () => {

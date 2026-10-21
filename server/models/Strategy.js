@@ -21,7 +21,7 @@ const strategySchema = new mongoose.Schema(
     entry: ruleGroup,
     exit: ruleGroup,
     risk: {
-      initialCapital: { type: Number, min: 1, max: 1e12, default: 10000 },
+      initialCapital: { type: Number, min: 1, max: 1e12, default: 500 },
       positionSizePct: { type: Number, min: 1, max: 100, default: 95 },
       feePct: { type: Number, min: 0, max: 10, default: 0.1 },
       stopLossPct: { type: Number, min: 0, max: 100, default: 0 },
