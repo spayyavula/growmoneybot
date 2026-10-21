@@ -12,6 +12,7 @@ export {
   realizedVolSeries, buildStructure, priceStructure, payoffAtExpiry, structureRisk, runOptionsBacktest,
 } from "./options.js";
 export { etOffsetHours, etCloseTime } from "./marketTime.js";
+export { GUIDED_PACES, GUIDED_STYLES, GUIDED_RISK, MARGIN_MINIMUM, buildGuidedStrategy } from "./guided.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";
 export { loadCandles, tradingViewUrl, isIntraday, QUICK_SYMBOLS } from "./candles.js";

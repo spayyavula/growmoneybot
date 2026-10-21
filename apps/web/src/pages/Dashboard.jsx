@@ -24,17 +24,23 @@ export default function Dashboard() {
       <div className="page-head">
         <div>
           <h1>Strategies</h1>
-          <p className="muted small">Build, backtest, and send to TradingView.</p>
+          <p className="muted small">Build, backtest, and send to TradingView. New here? <Link to="/app/strategies/guided">Try the guided setup</Link>.</p>
         </div>
-        <Link to="/app/strategies/new" className="btn btn-small hide-phone">+ New strategy</Link>
+        <div className="head-actions hide-phone">
+          <Link to="/app/strategies/guided" className="btn btn-ghost btn-small">Guided setup</Link>
+          <Link to="/app/strategies/new" className="btn btn-small">+ New strategy</Link>
+        </div>
       </div>
       {error && <p className="form-msg error">{error}</p>}
       {items === null && !error && <p className="muted">Loading…</p>}
       {items?.length === 0 && (
         <div className="empty panel">
           <h3>No strategies yet</h3>
-          <p className="muted">Start from a template like an EMA crossover or RSI bounce, then tweak it.</p>
-          <Link to="/app/strategies/new" className="btn">Create your first strategy</Link>
+          <p className="muted">New to trading strategies? Answer five questions and get a complete strategy, tested on past prices.</p>
+          <div className="empty-actions">
+            <Link to="/app/strategies/guided" className="btn">Build one step by step</Link>
+            <Link to="/app/strategies/new" className="btn btn-ghost">Start from a template</Link>
+          </div>
         </div>
       )}
       {items?.length > 0 && (

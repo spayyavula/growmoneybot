@@ -44,6 +44,16 @@ builder and results sit side by side. The site is also installable as a PWA (man
 - **Slippage (optional):** `risk.slippagePct` makes entries, signal exits and stop losses fill that much worse; take profits are limit orders and fill at the target. It's off by default and only stored when set, so existing rules keep their `specHash`. TradingView sets slippage in ticks, so the Pine export notes it instead of copying it.
 - **Not simulated:** margin calls (TradingView partially closes large shorts), funding/borrow costs.
 
+### Guided builder (beginners)
+`/app/strategies/guided` walks a new trader through five steps and produces a complete strategy:
+1. **Market:** crypto or US stocks/ETFs, the symbol, the starting amount, and (stocks) a cash or margin account. Margin needs $2,000+.
+2. **Style:** follow the trend (EMA crossover), buy the dip (RSI rebound), catch breakouts (Bollinger Band), or ride momentum (MACD + trend filter). Each comes with an honest trade-off.
+3. **Pace:** a few times a day (1h), once a day (1d) or once a week (1w).
+4. **Risk:** careful, balanced or bold. This sets position size, a stop loss scaled to the pace, and (careful) a profit target and a long-term trend filter. Stocks can use options spreads instead of shares, sized by the same risk level.
+5. **Review:** the rules in plain English, warnings (margin minimum, settlement, option affordability, costs), a backtest on past prices against buy-and-hold, and *Save and open in the builder*.
+
+The mapping from answers to rules lives in `packages/core/src/guided.js` (`buildGuidedStrategy`), so the mobile app can reuse it.
+
 ### Options overlay (estimated prices)
 For US stocks and ETFs, a strategy can **trade as options**: the entry and exit rules still run on the stock, and each trade opens an options position instead of shares.
 - **Positions:** a bull call debit spread or long call for long strategies; a bear put debit spread or long put for short ones. All are defined-risk: a trade can lose at most the premium paid.
