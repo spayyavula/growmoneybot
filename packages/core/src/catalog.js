@@ -122,8 +122,11 @@ export function normalizeStrategy(s) {
     conditions: (g?.conditions || []).map((c) => ({ left: fixOperand(c.left), op: c.op, right: fixOperand(c.right) })),
   });
   const r = s.risk || {};
+  const slippagePct = clamp(r.slippagePct, 0, 5, 0);
   return {
     ...s,
+    // Stock account type, for the cash-account settlement check. Not part of the rules.
+    account: s.account === "cash" ? "cash" : "margin",
     bars: Math.round(clamp(s.bars, 50, 5000, 1000)),
     entry: fixGroup(s.entry),
     exit: fixGroup(s.exit),
@@ -133,8 +136,89 @@ export function normalizeStrategy(s) {
       feePct: clamp(r.feePct, 0, 10, 0.1),
       stopLossPct: clamp(r.stopLossPct, 0, 100, 0),
       takeProfitPct: clamp(r.takeProfitPct, 0, 1000, 0),
+      // Only present when set, so rules saved before slippage existed hash exactly as before
+      ...(slippagePct > 0 && { slippagePct }),
     },
   };
+}
+
+// ---- Small accounts -------------------------------------------------------
+
+/**
+ * One-click cost settings for small retail accounts. Fees are typical published rates
+ * for the lowest volume tier; users should check their own exchange or broker.
+ */
+export const SMALL_ACCOUNT_PRESETS = [
+  {
+    key: "crypto-low", market: "crypto", label: "Crypto · low-fee exchange",
+    note: "About 0.1% per side, e.g. a low-fee pair or a maker-fee order.",
+    risk: { initialCapital: 500, positionSizePct: 95, feePct: 0.1, slippagePct: 0.05 },
+  },
+  {
+    key: "crypto-retail", market: "crypto", label: "Crypto · retail fee tier",
+    note: "About 0.6% per side: what many exchanges charge small accounts for market orders.",
+    risk: { initialCapital: 500, positionSizePct: 95, feePct: 0.6, slippagePct: 0.05 },
+  },
+  {
+    key: "stocks-cash", market: "stocks", label: "Stocks · cash account",
+    note: "Commission-free with fractional shares. Sale proceeds settle the next trading day.",
+    account: "cash",
+    risk: { initialCapital: 500, positionSizePct: 95, feePct: 0, slippagePct: 0.05 },
+  },
+  {
+    key: "stocks-margin", market: "stocks", label: "Stocks · margin account ($2,000+)",
+    note: "Commission-free. $2,000 is the minimum for margin; no settlement wait.",
+    account: "margin",
+    risk: { initialCapital: 2000, positionSizePct: 95, feePct: 0, slippagePct: 0.05 },
+  },
+];
+
+/** Apply a preset's costs and account type, keeping stop loss / take profit as they are. */
+export function applySmallAccountPreset(strategy, key) {
+  const p = SMALL_ACCOUNT_PRESETS.find((x) => x.key === key);
+  if (!p) return strategy;
+  return {
+    ...strategy,
+    ...(p.account && { account: p.account }),
+    ...(strategy.market !== p.market && strategy.market !== "csv" && { market: p.market, symbol: p.market === "stocks" ? "SPY" : "BTCUSDT" }),
+    risk: { ...strategy.risk, ...p.risk },
+  };
+}
+
+/**
+ * Does the strategy's edge survive its costs? Compares the average price move a trade
+ * captures (before costs) with the round-trip cost (fees + slippage, both sides).
+ *   level: "none" (too few trades), "negative" (costs take it all), "thin" (< 2×), "ok"
+ */
+export function costCheck(m, { minTrades = 5 } = {}) {
+  const cost = m?.roundTripCostPct ?? 0;
+  const move = m?.avgMovePct ?? 0;
+  const trades = m?.totalTrades ?? 0;
+  const ratio = cost > 0 ? move / cost : move > 0 ? Infinity : 0;
+  let level = "ok";
+  if (trades < minTrades) level = "none";
+  else if (move <= cost) level = "negative";
+  else if (ratio < 2) level = "thin";
+  return { level, ratio, costPct: cost, movePct: move, trades };
+}
+
+/** Round-trip cost a small account pays in each market (the low-fee presets), in %. */
+export const SMALL_ACCOUNT_ROUND_TRIP = { crypto: 2 * (0.1 + 0.05), stocks: 2 * (0 + 0.05) };
+
+/**
+ * Marketplace check: does an algorithm's verified edge hold up at small-account costs?
+ * Uses the entry/exit prices of its verified trades. If the author set slippage, those prices
+ * already include it, which only makes the check stricter.
+ */
+export function smallAccountFit(trades, market) {
+  const cost = SMALL_ACCOUNT_ROUND_TRIP[market];
+  if (!cost || !trades?.length) return null;
+  const moves = trades
+    .filter((t) => Number.isFinite(t.entryPrice) && Number.isFinite(t.exitPrice) && t.entryPrice > 0)
+    .map((t) => ((t.direction === "short" ? -1 : 1) * (t.exitPrice - t.entryPrice) / t.entryPrice) * 100);
+  if (!moves.length) return null;
+  const avgMovePct = moves.reduce((a, b) => a + b, 0) / moves.length;
+  return { friendly: avgMovePct >= 2 * cost, avgMovePct, roundTripCostPct: cost };
 }
 
 export function defaultStrategy() {

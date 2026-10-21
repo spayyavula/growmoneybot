@@ -86,9 +86,19 @@ export function AlgoCard({ a }) {
       </dl>
       <div className="algo-foot">
         <span className="verified-tag"><VerifiedSeal size={14} /> Verified</span>
+        {a.smallAccount?.friendly && <SmallAccountTag fit={a.smallAccount} />}
         <span className="muted tiny">{fmt.num(a.followers, 0)} following · v{a.version}</span>
       </div>
     </article>
+  );
+}
+
+/** Badge for algorithms whose verified average trade is at least 2× small-account round-trip costs. */
+export function SmallAccountTag({ fit }) {
+  return (
+    <span className="small-tag" title={`Average verified trade moves ${fmt.pct(fit.avgMovePct)}, at least 2× the ${fmt.pct(fit.roundTripCostPct)} a small account pays per round trip`}>
+      Small-account friendly
+    </span>
   );
 }
 

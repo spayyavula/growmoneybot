@@ -285,3 +285,17 @@ code.break { background: var(--bg); padding: 10px 12px; border-radius: 10px; fon
   .output .tabs button.on { background: var(--thumb); font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04); }
   .code-editor { min-height: 380px; }
 }
+
+/* Small-account cost check (results) */
+.cost-check { display: grid; gap: 10px; margin: 14px 0 18px; }
+.cost-verdict { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--accent-tint); border-left: 4px solid var(--pos); }
+.cost-verdict.warn { background: var(--warn-tint); border-left-color: var(--warn); }
+.cost-verdict.bad { background: var(--danger-tint); border-left-color: var(--neg); }
+.cost-verdict strong { font-size: 0.95rem; }
+.cost-verdict.warn strong { color: var(--warn); }
+.cost-verdict.bad strong { color: var(--neg); }
+.cost-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
+.cost-stats div { background: var(--fill-2); border-radius: var(--radius-sm); padding: 8px 10px; min-width: 0; }
+.cost-stats dt { font-size: 0.72rem; color: var(--label-2); }
+.cost-stats dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.preset-pick { margin-bottom: 10px; }

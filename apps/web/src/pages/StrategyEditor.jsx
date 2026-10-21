@@ -3,12 +3,14 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   defaultStrategy, normalizeStrategy, TEMPLATES, runBacktest, generatePine,
   loadCandles, tradingViewUrl, isIntraday, strategyChartSeries, tradeMarkers, webhookUrl, fmt,
+  SMALL_ACCOUNT_PRESETS, applySmallAccountPreset,
 } from "@gmb/core";
 import * as api from "../api.js";
 import RuleEditor from "../components/app/RuleEditor.jsx";
 import DataSource from "../components/app/DataSource.jsx";
 import PriceChart, { EquityChart } from "../components/app/PriceChart.jsx";
 import { MetricsGrid, TradesTable } from "../components/app/Results.jsx";
+import CostCheck from "../components/app/CostCheck.jsx";
 import { useAuth } from "../lib/auth.jsx";
 
 // Phones show one view at a time; wide screens show the builder beside the output tabs.
@@ -98,6 +100,13 @@ export default function StrategyEditor() {
   if (loading) return <div className="page-loading">Loading strategy…</div>;
 
   const shortMarginWarning = s.direction === "short" && Number(s.risk.positionSizePct) > 50;
+  const cashShort = s.market === "stocks" && s.account === "cash" && s.direction === "short";
+  const presets = SMALL_ACCOUNT_PRESETS.filter((p) => s.market === "csv" || p.market === s.market);
+  const applyPreset = (key) => {
+    const p = SMALL_ACCOUNT_PRESETS.find((x) => x.key === key);
+    setS((prev) => applySmallAccountPreset(prev, key));
+    setStatus({ state: "success", msg: `Applied "${p.label}". ${p.note}` });
+  };
   const busy = status.state === "loading";
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
@@ -153,13 +162,31 @@ export default function StrategyEditor() {
           <RuleEditor title="Exit rules" hint="Leave empty to exit only with the stop loss or take profit." group={s.exit} onChange={(exit) => set({ exit })} />
 
           <h3>Risk &amp; costs</h3>
+          <label className="field preset-pick">
+            <span>Small account preset</span>
+            <select value="" onChange={(e) => e.target.value && applyPreset(e.target.value)}>
+              <option value="">Choose a starting point…</option>
+              {presets.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+          </label>
+          {s.market === "stocks" && (
+            <div className="seg" role="radiogroup" aria-label="Account type">
+              {[["cash", "Cash account"], ["margin", "Margin account"]].map(([k, label]) => (
+                <button type="button" key={k} role="radio" aria-checked={(s.account || "margin") === k} className={(s.account || "margin") === k ? "on" : ""} onClick={() => set({ account: k })}>{label}</button>
+              ))}
+            </div>
+          )}
           <div className="row-3 keep">
             <label className="field"><span>Capital ($)</span><input type="number" inputMode="decimal" min={1} value={s.risk.initialCapital} onChange={(e) => setRisk("initialCapital", e.target.value)} /></label>
             <label className="field"><span>Position size %</span><input type="number" inputMode="decimal" min={1} max={100} value={s.risk.positionSizePct} onChange={(e) => setRisk("positionSizePct", e.target.value)} /></label>
             <label className="field"><span>Fee per side %</span><input type="number" inputMode="decimal" min={0} step={0.01} value={s.risk.feePct} onChange={(e) => setRisk("feePct", e.target.value)} /></label>
+            <label className="field"><span>Slippage per fill %</span><input type="number" inputMode="decimal" min={0} max={5} step={0.01} value={s.risk.slippagePct ?? 0} onChange={(e) => setRisk("slippagePct", e.target.value)} /></label>
             <label className="field"><span>Stop loss % (0 = off)</span><input type="number" inputMode="decimal" min={0} step={0.5} value={s.risk.stopLossPct} onChange={(e) => setRisk("stopLossPct", e.target.value)} /></label>
             <label className="field"><span>Take profit % (0 = off)</span><input type="number" inputMode="decimal" min={0} step={0.5} value={s.risk.takeProfitPct} onChange={(e) => setRisk("takeProfitPct", e.target.value)} /></label>
           </div>
+          {cashShort && (
+            <p className="note warn tiny">Shorting stocks needs a margin account. A cash account can only buy and sell shares it owns.</p>
+          )}
           {shortMarginWarning && (
             <p className="note warn tiny">
               Shorts above ~50% of equity can trigger margin calls on TradingView, which partially close the position.
@@ -187,6 +214,7 @@ export default function StrategyEditor() {
                   {run.result.metrics.rejectedOrders > 0 && ` · ${run.result.metrics.rejectedOrders} entries skipped (not enough equity at the fill price)`}
                 </p>
                 <MetricsGrid m={run.result.metrics} />
+                <CostCheck m={run.result.metrics} settlement={run.result.settlement} strategy={run.strategy} />
                 <PriceChart candles={run.candles} overlays={chart.overlays} panes={chart.panes} markers={chart.markers} />
                 <h4>Equity</h4>
                 <EquityChart equity={run.result.equity} />

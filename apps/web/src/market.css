@@ -144,3 +144,7 @@ fieldset.field.plain { border: 0; padding: 0; margin: 0; }
   .algo-grid-2 { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
   .program-grid { grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); }
 }
+
+.small-tag { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; background: var(--info-tint); color: var(--grad-b); white-space: nowrap; }
+.algo-foot { flex-wrap: wrap; gap: 6px; }
+.small-fit { margin: 6px 0 0; }

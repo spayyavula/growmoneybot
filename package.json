@@ -15,7 +15,8 @@
     "dev:web": "npm run dev -w @gmb/web",
     "dev:mobile": "npm run start -w @gmb/mobile",
     "build": "npm run build -w @gmb/web",
-    "build:web": "npm run build -w @gmb/web"
+    "build:web": "npm run build -w @gmb/web",
+    "test": "node --test \"server/**/*.test.js\""
   },
   "dependencies": {
     "@gmb/core": "*",

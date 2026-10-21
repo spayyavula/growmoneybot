@@ -5,7 +5,7 @@ import * as api from "../api.js";
 import { useAuth } from "../lib/auth.jsx";
 import { EquityChart } from "../components/app/PriceChart.jsx";
 import { MetricsGrid, TradesTable } from "../components/app/Results.jsx";
-import { ExpertByline, VerifiedSeal, RulesView, Pct, intervalLabel, shortHash, useMarketBase } from "../components/market/parts.jsx";
+import { ExpertByline, VerifiedSeal, RulesView, Pct, intervalLabel, shortHash, useMarketBase, SmallAccountTag } from "../components/market/parts.jsx";
 
 const ts = (d) => Math.floor(new Date(d).getTime() / 1000);
 
@@ -70,6 +70,13 @@ export default function AlgorithmPage() {
           <p className="lead-sm">{a.summary}</p>
           <p className="small">by <ExpertByline author={a.author} /> · {fmt.num(a.followers, 0)} following · {fmt.num(a.copies, 0)} copies</p>
           {a.tags?.length > 0 && <div className="tag-row">{a.tags.map((t) => <span key={t} className="chip-static">#{t}</span>)}</div>}
+          {a.smallAccount && (
+            <p className="small small-fit">
+              {a.smallAccount.friendly && <><SmallAccountTag fit={a.smallAccount} />{" "}</>}
+              The average verified trade moved {fmt.pct(a.smallAccount.avgMovePct)}; a small account pays about {fmt.pct(a.smallAccount.roundTripCostPct)} per
+              round trip in fees and slippage{a.smallAccount.friendly ? ", so the edge holds up after costs." : ". That's less than 2× the cost, so most of the edge could go to costs at retail fee levels."}
+            </p>
+          )}
         </div>
         <div className="algo-actions">
           {access.isAuthor ? (

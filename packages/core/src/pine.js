@@ -98,6 +98,10 @@ export function generatePine(strategy, { strategyId = "" } = {}) {
     `// For webhook alerts: create an alert on this strategy, set the message to`,
     `// {{strategy.order.alert_message}} and the webhook URL to your GrowMoneyBot URL.`,
     `// Hypothetical results only. Not financial advice.`,
+    ...(Number(risk.slippagePct) > 0
+      ? [`// Note: the GrowMoneyBot backtest adds ${num(risk.slippagePct)}% slippage per fill. TradingView sets slippage in ticks`,
+         `// (Properties → Slippage), so its results here won't include it unless you set that too.`]
+      : []),
     `//@version=6`,
     `strategy("${pineString(strategy.name) || "GrowMoneyBot strategy"}", overlay=true,`,
     `     initial_capital=${num(risk.initialCapital)},`,
