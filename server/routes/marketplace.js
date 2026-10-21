@@ -70,8 +70,10 @@ router.get("/", wrap(async (req, res) => {
     new: { publishedAt: -1 },
   };
   const sort = sorts[req.query.sort] || sorts.followers;
-  const items = await Algorithm.find(filter).sort(sort).limit(60).populate("author", AUTHOR_FIELDS);
-  res.json({ ok: true, algorithms: items.map(cardView) });
+  const items = await Algorithm.find(filter).sort(sort).limit(req.query.small === "1" ? 200 : 60).populate("author", AUTHOR_FIELDS);
+  let cards = items.map(cardView);
+  if (req.query.small === "1") cards = cards.filter((c) => c.smallAccount?.friendly).slice(0, 60);
+  res.json({ ok: true, algorithms: cards });
 }));
 
 router.get("/following", requireAuth, wrap(async (req, res) => {

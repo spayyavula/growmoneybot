@@ -1,7 +1,7 @@
 // Marketplace verification: the server fetches its own market data, runs the shared backtest
 // engine, freezes the rules + dataset, and keeps a forward (live) track record.
 import {
-  verifyBacktest, livePerformance, strategySpec, candleRows, downsample, slimTrades,
+  verifyBacktest, livePerformance, strategySpec, candleRows, downsample, slimTrades, smallAccountFit,
   LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES,
 } from "@gmb/core";
 import Algorithm from "./models/Algorithm.js";
@@ -145,6 +145,8 @@ export function cardView(a) {
       started: !!a.live?.started, since: a.live?.since || a.publishedAt, updatedAt: a.live?.updatedAt,
       metrics: pick(a.live?.metrics, CARD_KEYS),
     },
+    // Does the verified edge hold up at small-account costs? (see smallAccountFit in @gmb/core)
+    smallAccount: smallAccountFit(a.verification?.trades, a.market),
   };
 }
 

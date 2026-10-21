@@ -38,7 +38,7 @@ function cleanGroup(g) {
 
 function cleanBody(body = {}) {
   const out = {};
-  for (const k of ["name", "description", "market", "symbol", "interval", "bars", "direction", "risk"]) {
+  for (const k of ["name", "description", "market", "symbol", "interval", "bars", "direction", "risk", "account"]) {
     if (body[k] !== undefined) out[k] = body[k];
   }
   if (body.entry !== undefined) out.entry = cleanGroup(body.entry);

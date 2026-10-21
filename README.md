@@ -41,7 +41,16 @@ builder and results sit side by side. The site is also installable as a PWA (man
 - Position size = equity × % ÷ signal-bar close (Pine's `percent_of_equity`). An entry is skipped if the fill would cost more than available equity.
 - Stop loss / take profit are active from the bar after the fill. If both are hit in one bar, the intrabar order follows TradingView's rule (whichever extreme is closer to the open comes first). Gaps fill at the open.
 - Commission is % of traded value, charged on entry and exit. Net profit counts closed trades only; open P&L is shown separately.
-- **Not simulated:** margin calls (TradingView partially closes large shorts), slippage, funding/borrow costs.
+- **Slippage (optional):** `risk.slippagePct` makes entries, signal exits and stop losses fill that much worse; take profits are limit orders and fill at the target. It's off by default and only stored when set, so existing rules keep their `specHash`. TradingView sets slippage in ticks, so the Pine export notes it instead of copying it.
+- **Not simulated:** margin calls (TradingView partially closes large shorts), funding/borrow costs.
+
+### Small-account mode
+Built for retail traders with a few hundred dollars:
+- **Default:** new strategies and templates start from the crypto low-fee preset ($500, 95% per trade, 0.1% fees, 0.05% slippage). Strategies saved earlier keep their own settings.
+- **Presets** under *Risk & costs*: crypto low-fee (0.1%) and retail-tier (0.6%) exchanges, stock cash account ($500) and margin account ($2,000). Each sets capital, fees and 0.05% slippage and keeps stops/targets.
+- **Cost check** in results: the average price move a trade captures (before costs) against the round-trip cost (fees + slippage, both sides). Under 1× the strategy loses money after costs at any account size; under 2× is flagged as thin. Fees and slippage paid are shown in dollars.
+- **Cash-account settlement (stocks):** with *Cash account* selected, results flag good-faith violations — positions bought with unsettled sale proceeds (T+1) and sold the same day — and warn when three fall within 12 months, which normally restricts the account for 90 days. Trading days use US Eastern time with daylight saving.
+- **Marketplace:** algorithms whose verified average trade is at least 2× a small account's round-trip cost (0.3% crypto, 0.1% stocks) get a *Small-account friendly* badge and filter (`/api/marketplace?small=1`).
 
 The indicators and the backtester were checked against PineTS on generated data: indicator values match to
 ~10 decimal places, and trade entry/exit bars and prices match for long and short strategies with

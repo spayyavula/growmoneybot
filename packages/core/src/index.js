@@ -2,7 +2,7 @@
 export * as indicators from "./indicators.js";
 export * from "./catalog.js";
 export { computeOperand, operandKey, ruleSeries, sourceSeries } from "./evaluate.js";
-export { runBacktest, computeMetrics } from "./backtest.js";
+export { runBacktest, computeMetrics, tradingDay, settlementSummary } from "./backtest.js";
 export {
   ENGINE_VERSION, LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, canonicalJson, sha256Hex, strategySpec, candleRows, rowsToCandles,
   receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance, liveEvents,

@@ -12,6 +12,7 @@ export default function Marketplace() {
   const { inApp } = useMarketBase();
   const [sort, setSort] = useState("followers");
   const [market, setMarket] = useState("");
+  const [small, setSmall] = useState(false);
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("all");
@@ -25,10 +26,10 @@ export default function Marketplace() {
 
   useEffect(() => {
     setItems(null);
-    const params = { sort, ...(market && { market }), ...(query && { q: query }) };
+    const params = { sort, ...(market && { market }), ...(query && { q: query }), ...(small && { small: "1" }) };
     const load = tab === "following" ? api.api.listFollowing() : api.api.listMarketplace(params);
     load.then((d) => { setItems(d.algorithms); setError(""); }).catch((e) => setError(e.message));
-  }, [sort, market, query, tab]);
+  }, [sort, market, query, tab, small]);
 
   const expertStatus = user?.expert?.status;
 
@@ -69,6 +70,7 @@ export default function Marketplace() {
           <input type="search" placeholder="Search by name, symbol or tag" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search algorithms" />
           <div className="chips" role="group" aria-label="Market">
             {MARKETS.map(([k, label]) => <button key={k} className={`chip ${market === k ? "on" : ""}`} onClick={() => setMarket(k)}>{label}</button>)}
+            <button className={`chip ${small ? "on" : ""}`} aria-pressed={small} onClick={() => setSmall((v) => !v)} title="Average verified trade is at least 2× what a small account pays per round trip">Small-account friendly</button>
           </div>
           <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort by">
             {SORTS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
@@ -82,7 +84,7 @@ export default function Marketplace() {
         <div className="empty panel">
           {tab === "following"
             ? <><h2>Nothing followed yet</h2><p className="muted">Follow an algorithm to see its rules, copy it, and re-check its verification.</p></>
-            : <><h2>No algorithms here yet</h2><p className="muted">{query || market ? "Try a different search or market." : "Approved experts will publish their first algorithms soon."}</p></>}
+            : <><h2>No algorithms here yet</h2><p className="muted">{query || market || small ? "Try a different search or filter." : "Approved experts will publish their first algorithms soon."}</p></>}
         </div>
       )}
       {items?.length > 0 && <div className="algo-grid">{items.map((a) => <AlgoCard key={a._id} a={a} />)}</div>}

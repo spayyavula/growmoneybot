@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import {
   defaultStrategy, normalizeStrategy, TEMPLATES, INTERVALS, QUICK_SYMBOLS, runBacktest, generatePine,
   loadCandles, tradingViewUrl, isIntraday, strategyChartSeries, tradeMarkers, webhookUrl, fmt,
+  SMALL_ACCOUNT_PRESETS, applySmallAccountPreset, costCheck,
 } from "@gmb/core";
 import { api, SITE_ORIGIN } from "../../src/api.js";
 import { useAuth } from "../../src/auth.js";
@@ -20,6 +21,32 @@ import { colors, space } from "../../src/theme.js";
 const VIEWS = [["rules", "Rules"], ["results", "Results"], ["pine", "Pine"]];
 const INTERVAL_OPTIONS = INTERVALS.map((i) => ({ value: i.key, label: i.label }));
 const tap = () => { if (Platform.OS !== "web") Haptics.selectionAsync().catch(() => {}); };
+
+const COST_TITLE = {
+  ok: "The edge clears its costs", thin: "Thin edge: costs take a big share",
+  negative: "Costs eat the whole edge", none: "Not enough trades to judge costs",
+};
+
+// Does the average trade beat the round-trip cost? Plus the cash-account settlement check.
+function CostSummary({ m, settlement, strategy }) {
+  const c = costCheck(m);
+  const bad = c.level === "negative" || c.level === "thin";
+  const gfv = strategy.market === "stocks" && strategy.account === "cash" && settlement?.goodFaithViolations > 0;
+  return (
+    <View style={{ marginVertical: space.md, gap: space.sm }}>
+      <Note warn={bad}>
+        {COST_TITLE[c.level]}.{c.level !== "none" ? ` Average move per trade ${fmt.pct(c.movePct)} vs ${fmt.pct(c.costPct)} round-trip costs (fees ${fmt.money(m.feesPaid, 2)}${m.slippagePct > 0 ? `, slippage ${fmt.money(m.slippagePaid, 2)}` : ""}).` : ""}
+        {c.level === "negative" ? " After costs the average trade loses money." : c.level === "thin" ? " Aim for at least 2×." : ""}
+      </Note>
+      {gfv && (
+        <Note warn>
+          Cash account: {settlement.goodFaithViolations} good-faith {settlement.goodFaithViolations === 1 ? "violation" : "violations"} (bought with unsettled funds and sold the same day).
+          {settlement.restricted ? " Three in 12 months normally restricts the account for 90 days." : ""}
+        </Note>
+      )}
+    </View>
+  );
+}
 
 export default function StrategyScreen() {
   const { id } = useLocalSearchParams();
@@ -162,16 +189,36 @@ export default function StrategyScreen() {
               <RuleEditor title="Exit" hint="Leave empty to exit only with the stop loss or take profit." group={s.exit} onChange={(exit) => set({ exit })} />
 
               <SectionTitle>Risk & costs</SectionTitle>
+              <Select
+                label="Small account preset" value="" title="Small account preset"
+                options={[{ value: "", label: "Choose a starting point…" }, ...SMALL_ACCOUNT_PRESETS.filter((p) => s.market === "csv" || p.market === s.market).map((p) => ({ value: p.key, label: p.label }))]}
+                onChange={(key) => {
+                  const p = SMALL_ACCOUNT_PRESETS.find((x) => x.key === key);
+                  if (!p) return;
+                  tap(); setS((prev) => applySmallAccountPreset(prev, key));
+                  Alert.alert(p.label, p.note);
+                }}
+                style={{ marginBottom: space.md }}
+              />
+              {s.market === "stocks" && (
+                <Segmented options={[["cash", "Cash account"], ["margin", "Margin account"]]} value={s.account || "margin"} onChange={(account) => set({ account })} style={{ marginBottom: space.md }} />
+              )}
               <View style={st.row}>
                 <NumberField label="Capital ($)" value={s.risk.initialCapital} onChange={(v) => setRisk("initialCapital", v)} />
                 <NumberField label="Position size %" value={s.risk.positionSizePct} onChange={(v) => setRisk("positionSizePct", v)} />
               </View>
               <View style={[st.row, { marginTop: space.md }]}>
                 <NumberField label="Fee per side %" value={s.risk.feePct} onChange={(v) => setRisk("feePct", v)} />
+                <NumberField label="Slippage %" value={s.risk.slippagePct ?? 0} onChange={(v) => setRisk("slippagePct", v)} />
+              </View>
+              <View style={[st.row, { marginTop: space.md }]}>
                 <NumberField label="Stop loss %" value={s.risk.stopLossPct} onChange={(v) => setRisk("stopLossPct", v)} />
                 <NumberField label="Take profit %" value={s.risk.takeProfitPct} onChange={(v) => setRisk("takeProfitPct", v)} />
               </View>
               <Muted small style={{ marginTop: 4 }}>Set stop loss or take profit to 0 to turn it off.</Muted>
+              {s.market === "stocks" && s.account === "cash" && s.direction === "short" && (
+                <Note warn>Shorting stocks needs a margin account. A cash account can only buy and sell shares it owns.</Note>
+              )}
               {shortWarning && (
                 <Note warn>
                   Shorts above ~50% of equity can trigger margin calls on TradingView, which partially close the position.
@@ -192,6 +239,7 @@ export default function StrategyScreen() {
                   {run.strategy.symbol} · {run.strategy.interval} · {run.candles.length} bars · {fmt.date(run.candles[0].time)} → {fmt.date(run.candles[run.candles.length - 1].time)}
                 </Muted>
                 <MetricsGrid m={run.result.metrics} />
+                <CostSummary m={run.result.metrics} settlement={run.result.settlement} strategy={run.strategy} />
                 <PriceChart payload={chartPayload} />
                 <Muted small style={{ marginTop: 6 }}>Pinch to zoom, drag sideways to scroll back in time.</Muted>
                 <SectionTitle>Equity</SectionTitle>
