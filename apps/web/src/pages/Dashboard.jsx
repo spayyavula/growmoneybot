@@ -24,9 +24,10 @@ export default function Dashboard() {
       <div className="page-head">
         <div>
           <h1>Strategies</h1>
-          <p className="muted small">Build, backtest, and send to TradingView. New here? <Link to="/app/strategies/guided">Try the guided setup</Link>.</p>
+          <p className="muted small">Build, backtest, and send to TradingView. New here? <Link to="/app/strategies/guided">Try the guided setup</Link> or <Link to="/app/strategies/describe">describe a strategy in words</Link>.</p>
         </div>
         <div className="head-actions hide-phone">
+          <Link to="/app/strategies/describe" className="btn btn-ghost btn-small">Describe it</Link>
           <Link to="/app/strategies/guided" className="btn btn-ghost btn-small">Guided setup</Link>
           <Link to="/app/strategies/new" className="btn btn-small">+ New strategy</Link>
         </div>
@@ -39,6 +40,7 @@ export default function Dashboard() {
           <p className="muted">New to trading strategies? Answer five questions and get a complete strategy, tested on past prices.</p>
           <div className="empty-actions">
             <Link to="/app/strategies/guided" className="btn">Build one step by step</Link>
+            <Link to="/app/strategies/describe" className="btn btn-ghost">Describe it in words</Link>
             <Link to="/app/strategies/new" className="btn btn-ghost">Start from a template</Link>
           </div>
         </div>

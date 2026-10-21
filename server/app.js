@@ -10,6 +10,7 @@ import devicesRouter from "./routes/devices.js";
 import expertsRouter from "./routes/experts.js";
 import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter from "./routes/admin.js";
+import describeRouter from "./routes/describe.js";
 import { webhookRouter, signalsRouter } from "./routes/webhooks.js";
 
 const app = express();
@@ -40,6 +41,7 @@ api.use("/signals", signalsRouter);
 api.use("/experts", expertsRouter);
 api.use("/marketplace", marketplaceRouter);
 api.use("/admin", adminRouter);
+api.use("/describe", describeRouter);
 
 app.use("/api", api);
 app.use("/.netlify/functions/api", api);
