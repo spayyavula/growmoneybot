@@ -98,6 +98,11 @@ export function generatePine(strategy, { strategyId = "" } = {}) {
     `// For webhook alerts: create an alert on this strategy, set the message to`,
     `// {{strategy.order.alert_message}} and the webhook URL to your GrowMoneyBot URL.`,
     `// Hypothetical results only. Not financial advice.`,
+    ...(strategy.instrument === "options"
+      ? [`// Options overlay: in GrowMoneyBot each trade opens an options position (${strategy.options?.structure === "single" ? "long call/put" : "debit spread"}).`,
+         `// TradingView strategies can't trade options, so this script trades the stock on the same signals.`,
+         `// Use its alerts as the signal to open or close your options position.`]
+      : []),
     ...(Number(risk.slippagePct) > 0
       ? [`// Note: the GrowMoneyBot backtest adds ${num(risk.slippagePct)}% slippage per fill. TradingView sets slippage in ticks`,
          `// (Properties → Slippage), so its results here won't include it unless you set that too.`]

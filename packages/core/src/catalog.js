@@ -1,6 +1,8 @@
 // Operands a strategy condition can use. Each has editable params and,
 // for multi-output indicators, a list of `fields`.
 
+import { normalizeOptions } from "./options.js";
+
 export const SOURCES = ["close", "open", "high", "low", "hl2", "hlc3", "ohlc4"];
 
 export const OPERANDS = {
@@ -127,6 +129,10 @@ export function normalizeStrategy(s) {
     ...s,
     // Stock account type, for the cash-account settlement check. Not part of the rules.
     account: s.account === "cash" ? "cash" : "margin",
+    // "options" places each trade as an options position (see options.js). Shares strategies
+    // carry neither field, so their rules hash exactly as before.
+    instrument: s.instrument === "options" ? "options" : undefined,
+    options: s.instrument === "options" ? normalizeOptions(s.options) : undefined,
     bars: Math.round(clamp(s.bars, 50, 5000, 1000)),
     entry: fixGroup(s.entry),
     exit: fixGroup(s.exit),

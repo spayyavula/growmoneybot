@@ -7,6 +7,11 @@ export {
   ENGINE_VERSION, LIVE_WARMUP_BARS, MIN_VERIFIED_TRADES, canonicalJson, sha256Hex, strategySpec, candleRows, rowsToCandles,
   receiptMetrics, metricsMatch, downsample, slimTrades, verifyBacktest, receiptHashOf, livePerformance, liveEvents,
 } from "./verify.js";
+export {
+  OPTION_DEFAULTS, normalizeOptions, bsPrice, bsDelta, normCdf, normInv, strikeForDelta, strikeStep, expiryFor,
+  realizedVolSeries, buildStructure, priceStructure, payoffAtExpiry, structureRisk, runOptionsBacktest,
+} from "./options.js";
+export { etOffsetHours, etCloseTime } from "./marketTime.js";
 export { generatePine } from "./pine.js";
 export { createApi, webhookUrl } from "./api.js";
 export { loadCandles, tradingViewUrl, isIntraday, QUICK_SYMBOLS } from "./candles.js";
