@@ -4,6 +4,28 @@
 // The watermark (`live.notifiedThrough`) is the key of the newest event already alerted —
 // a bar time in unix seconds (see liveEvents in @gmb/core).
 
+const MIN = 60;
+// A minute under the 15-minute / hourly cadence so run-to-run jitter never skips a run
+const RETRY_SOON = 14 * MIN; // right after a bar should have closed, or after a failed refresh
+const RETRY_SLOW = 59 * MIN; // the bar still hasn't appeared after an hour: market closed (weekend, holiday)
+
+/**
+ * Whether a live record needs refreshing: only when a new bar should have closed since the
+ * last completed bar it saw (`live.lastBarTime`), so nothing is fetched while no new data
+ * can exist, and a new bar is picked up by the next 15-minute run after it closes.
+ */
+export function isLiveDue(live, stepSec, nowSec) {
+  const updated = live?.updatedAt ? Math.floor(new Date(live.updatedAt).getTime() / 1000) : null;
+  if (!updated || !Number.isFinite(live?.lastBarTime)) return true; // never refreshed, or saved before lastBarTime existed
+  const sinceUpdate = nowSec - updated;
+  if (live.error) return sinceUpdate >= RETRY_SOON;
+  const nextClose = live.lastBarTime + 2 * stepSec; // close time of the bar after the last one seen
+  if (nowSec < nextClose) return false;
+  if (updated < nextClose) return true; // first look since that bar closed
+  // Expected bar is missing (market closed, provider lag): keep checking, every 15 min at first, then hourly
+  return sinceUpdate >= (nowSec - nextClose < 60 * MIN ? RETRY_SOON : RETRY_SLOW);
+}
+
 /** Where alerting starts when an algorithm has no watermark yet. */
 export function initialWatermark(prevLive, sinceSec, stepSec) {
   if (Number.isFinite(prevLive?.notifiedThrough)) return prevLive.notifiedThrough;

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { livePerformance } from "../packages/core/src/verify.js";
-import { initialWatermark, selectNewEvents, eventNotification } from "./liveEvents.js";
+import { initialWatermark, selectNewEvents, eventNotification, isLiveDue } from "./liveEvents.js";
 
 const H = 3600;
 const T0 = 1_760_000_400 - (1_760_000_400 % H); // an hour boundary
@@ -111,4 +111,44 @@ test("notification text", () => {
 
   const stop = eventNotification(algo, { type: "exit", action: "sell", pending: false, price: 64000, reason: "stop loss", pnlPct: -4.8 });
   assert.match(stop.body, /^Stop loss hit at 64000 \(-4\.80%\)\./);
+});
+
+// ---- When the 15-minute job refreshes an algorithm ----------------------
+
+const at = (sec) => new Date(sec * 1000);
+const M = 60;
+
+test("refresh is due only once the next bar has closed", () => {
+  const D = 86400;
+  const last = T0; // newest completed daily bar opened at T0, closed at T0 + 1d
+  const live = { lastBarTime: last, updatedAt: at(last + D + 2 * M) };
+  assert.equal(isLiveDue(live, D, last + D + 17 * M), false); // mid-day: no new bar can exist
+  assert.equal(isLiveDue(live, D, last + 2 * D - M), false);
+  assert.equal(isLiveDue(live, D, last + 2 * D + 2 * M), true); // first run after the next close
+});
+
+test("1h algorithm is picked up by the first run after each close", () => {
+  const live = { lastBarTime: T0, updatedAt: at(T0 + H + 2 * M) };
+  assert.equal(isLiveDue(live, H, T0 + H + 17 * M), false);
+  assert.equal(isLiveDue(live, H, T0 + H + 47 * M), false);
+  assert.equal(isLiveDue(live, H, T0 + 2 * H + 2 * M), true);
+});
+
+test("missing bar (market closed): every ~15 min for an hour, then hourly", () => {
+  const nextClose = T0 + 2 * H;
+  const live = { lastBarTime: T0, updatedAt: at(nextClose + 2 * M) }; // looked, bar wasn't there
+  assert.equal(isLiveDue(live, H, nextClose + 10 * M), false);
+  assert.equal(isLiveDue(live, H, nextClose + 17 * M - 4), true); // run jitter of a few seconds still counts
+  const later = { lastBarTime: T0, updatedAt: at(nextClose + 2 * H) };
+  assert.equal(isLiveDue(later, H, nextClose + 2 * H + 30 * M), false);
+  assert.equal(isLiveDue(later, H, nextClose + 3 * H), true);
+});
+
+test("never refreshed, saved before lastBarTime existed, or last refresh failed", () => {
+  assert.equal(isLiveDue(undefined, H, T0), true);
+  assert.equal(isLiveDue({ since: at(T0), started: false }, H, T0), true);
+  assert.equal(isLiveDue({ updatedAt: at(T0) }, H, T0 + M), true);
+  const failed = { lastBarTime: T0, updatedAt: at(T0 + 2 * H), error: "timeout" };
+  assert.equal(isLiveDue(failed, H, T0 + 2 * H + 10 * M), false);
+  assert.equal(isLiveDue(failed, H, T0 + 2 * H + 15 * M), true);
 });

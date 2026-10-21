@@ -7,7 +7,7 @@ import {
 import Algorithm from "./models/Algorithm.js";
 import AlgoDataset from "./models/AlgoDataset.js";
 import { getCandles, INTERVAL_SECONDS, MAX_BARS } from "./marketData.js";
-import { initialWatermark, selectNewEvents } from "./liveEvents.js";
+import { initialWatermark, selectNewEvents, isLiveDue } from "./liveEvents.js";
 import { alertFollowers } from "./followerAlerts.js";
 
 export class PublishError extends Error {
@@ -51,9 +51,9 @@ export async function saveDataset(algorithmId, version, dataHash, rows) {
   );
 }
 
-// How long a live result stays fresh: one bar, between 15 minutes and 6 hours
-export const liveTtlMs = (interval) => Math.min(6 * 3600, Math.max(900, INTERVAL_SECONDS[interval] || 86400)) * 1000;
-export const isLiveStale = (algo) => !algo.live?.updatedAt || Date.now() - new Date(algo.live.updatedAt).getTime() > liveTtlMs(algo.interval);
+// Refresh when a new bar should have closed since the last one seen (see isLiveDue)
+export const isLiveStale = (algo) =>
+  isLiveDue(algo.live, INTERVAL_SECONDS[algo.interval] || 86400, Math.floor(Date.now() / 1000));
 
 /**
  * Recompute forward performance since the current version's publish date, and alert
@@ -88,6 +88,7 @@ export async function refreshLive(algo) {
       since: algo.publishedAt, started: lp.started, bars: lp.bars, metrics: lp.metrics,
       equity: lp.started ? equityPoints(lp.equity, 300) : [], trades: slimTrades(lp.trades).slice(-200),
       openTrade: lp.openTrade, updatedAt: new Date(), error: undefined,
+      lastBarTime: candles.length ? candles[candles.length - 1].time : undefined,
       notifiedThrough: Math.max(sel.watermark, Number.isFinite(prev.notifiedThrough) ? prev.notifiedThrough : -Infinity),
     };
   } catch (err) {
@@ -107,7 +108,7 @@ export async function refreshLive(algo) {
   return algo;
 }
 
-/** Refresh the stalest published algorithms within a time budget (used by the scheduled function). */
+/** Refresh the published algorithms that have a new bar, stalest first, within a time budget (scheduled function, every 15 min). */
 export async function refreshStale({ budgetMs = 20000, limit = 50 } = {}) {
   const started = Date.now();
   const list = await Algorithm.find({ status: "published" }).sort({ "live.updatedAt": 1 }).limit(limit);

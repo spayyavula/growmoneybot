@@ -27,6 +27,7 @@ const liveSchema = new mongoose.Schema({
   trades: Mixed,
   openTrade: Mixed,
   bars: Number,
+  lastBarTime: Number, // newest completed bar seen (unix s); a refresh is due once the next bar closes
   updatedAt: Date,
   error: String,
   notifiedThrough: Number, // key (bar time, unix s) of the newest trade event already alerted to followers
