@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   defaultStrategy, normalizeStrategy, TEMPLATES, runBacktest, generatePine,
   loadCandles, tradingViewUrl, isIntraday, strategyChartSeries, tradeMarkers, webhookUrl, fmt,
-  SMALL_ACCOUNT_PRESETS, applySmallAccountPreset,
+  SMALL_ACCOUNT_PRESETS, applySmallAccountPreset, OPTION_DEFAULTS,
 } from "@gmb/core";
 import * as api from "../api.js";
 import RuleEditor from "../components/app/RuleEditor.jsx";
@@ -11,6 +11,7 @@ import DataSource from "../components/app/DataSource.jsx";
 import PriceChart, { EquityChart } from "../components/app/PriceChart.jsx";
 import { MetricsGrid, TradesTable } from "../components/app/Results.jsx";
 import CostCheck from "../components/app/CostCheck.jsx";
+import { OptionsPreview, OptionsCostCheck, OptionsTradesTable, EstimateNote } from "../components/app/OptionsResults.jsx";
 import { useAuth } from "../lib/auth.jsx";
 
 // Phones show one view at a time; wide screens show the builder beside the output tabs.
@@ -40,6 +41,9 @@ export default function StrategyEditor() {
 
   const set = (patch) => setS((prev) => ({ ...prev, ...patch }));
   const setRisk = (k, v) => setS((prev) => ({ ...prev, risk: { ...prev.risk, [k]: v === "" ? "" : Number(v) } }));
+  const setOpt = (k, v) => setS((prev) => ({ ...prev, options: { ...OPTION_DEFAULTS, ...prev.options, [k]: k === "structure" || v === "" ? v : Number(v) } }));
+  const isOptions = s.instrument === "options";
+  const opt = { ...OPTION_DEFAULTS, ...s.options };
   const outputTab = view === "rules" ? "results" : view; // on wide screens the output panel never shows "rules"
 
   const pine = useMemo(() => {
@@ -49,7 +53,8 @@ export default function StrategyEditor() {
 
   const save = async () => {
     const clean = normalizeStrategy(s);
-    const body = { ...clean, _id: undefined, user: undefined, lastBacktest: undefined };
+    // "shares" tells the server to drop options settings when a strategy switches back
+    const body = { ...clean, instrument: clean.instrument || "shares", _id: undefined, user: undefined, lastBacktest: undefined };
     setStatus({ state: "loading", msg: "Saving…" });
     try {
       if (isNew) {
@@ -148,8 +153,24 @@ export default function StrategyEditor() {
           <h3>Market</h3>
           <DataSource
             value={{ ...s, csvCandles }}
-            onChange={(v) => { setCsvCandles(v.csvCandles ?? null); set({ market: v.market, symbol: v.symbol, interval: v.interval, bars: v.bars }); }}
+            onChange={(v) => {
+              setCsvCandles(v.csvCandles ?? null);
+              set({ market: v.market, symbol: v.symbol, interval: v.interval, bars: v.bars, ...(v.market === "crypto" && { instrument: undefined }) });
+            }}
           />
+
+          {s.market !== "crypto" && (
+            <>
+              <h3>Trade as</h3>
+              <div className="seg" role="radiogroup" aria-label="Trade as">
+                {[["shares", "Shares"], ["options", "Options"]].map(([k, label]) => (
+                  <button type="button" key={k} role="radio" aria-checked={(isOptions ? "options" : "shares") === k} className={(isOptions ? "options" : "shares") === k ? "on" : ""}
+                    onClick={() => set(k === "options" ? { instrument: "options", options: { ...OPTION_DEFAULTS, ...s.options } } : { instrument: undefined })}>{label}</button>
+                ))}
+              </div>
+              {isOptions && <p className="muted tiny">The rules run on the stock; each trade opens an options position. Long buys calls, short buys puts.</p>}
+            </>
+          )}
 
           <h3>Direction</h3>
           <div className="seg">
@@ -162,6 +183,40 @@ export default function StrategyEditor() {
           <RuleEditor title="Exit rules" hint="Leave empty to exit only with the stop loss or take profit." group={s.exit} onChange={(exit) => set({ exit })} />
 
           <h3>Risk &amp; costs</h3>
+          {isOptions ? (
+            <>
+              <div className="seg" role="radiogroup" aria-label="Options position">
+                {[["spread", s.direction === "short" ? "Bear put spread" : "Bull call spread"], ["single", s.direction === "short" ? "Long put" : "Long call"]].map(([k, label]) => (
+                  <button type="button" key={k} role="radio" aria-checked={opt.structure === k} className={opt.structure === k ? "on" : ""} onClick={() => setOpt("structure", k)}>{label}</button>
+                ))}
+              </div>
+              <div className="row-3 keep">
+                <label className="field"><span>Capital ($)</span><input id="opt-capital" type="number" inputMode="decimal" min={1} value={s.risk.initialCapital} onChange={(e) => setRisk("initialCapital", e.target.value)} /></label>
+                <label className="field"><span>Max premium per trade %</span><input id="opt-risk" type="number" inputMode="decimal" min={1} max={100} value={opt.riskPct} onChange={(e) => setOpt("riskPct", e.target.value)} /></label>
+                <label className="field"><span>Days to expiry</span><input id="opt-dte" type="number" inputMode="numeric" min={1} max={365} value={opt.dte} onChange={(e) => setOpt("dte", e.target.value)} /></label>
+                <label className="field"><span>Delta of option bought</span><input id="opt-delta" type="number" inputMode="decimal" min={0.05} max={0.95} step={0.05} value={opt.delta} onChange={(e) => setOpt("delta", e.target.value)} /></label>
+                {opt.structure === "spread" && (
+                  <label className="field"><span>Spread width ($)</span><input id="opt-width" type="number" inputMode="decimal" min={0.5} step={0.5} value={opt.spreadWidth} onChange={(e) => setOpt("spreadWidth", e.target.value)} /></label>
+                )}
+                <label className="field"><span>Take profit % of premium</span><input id="opt-tp" type="number" inputMode="decimal" min={0} step={5} value={opt.takeProfitPct} onChange={(e) => setOpt("takeProfitPct", e.target.value)} /></label>
+                <label className="field"><span>Stop loss % of premium</span><input id="opt-sl" type="number" inputMode="decimal" min={0} max={100} step={5} value={opt.stopLossPct} onChange={(e) => setOpt("stopLossPct", e.target.value)} /></label>
+                <label className="field"><span>Fee per contract ($)</span><input id="opt-fee" type="number" inputMode="decimal" min={0} step={0.05} value={opt.feePerContract} onChange={(e) => setOpt("feePerContract", e.target.value)} /></label>
+                <label className="field"><span>Bid-ask spread %</span><input id="opt-spread" type="number" inputMode="decimal" min={0} step={0.5} value={opt.spreadPct} onChange={(e) => setOpt("spreadPct", e.target.value)} /></label>
+              </div>
+              <p className="muted tiny">
+                A trade can lose at most the premium paid: {fmt.pct(Number(opt.riskPct) || 0, 0)} of the account. Delta 0.5 is about at the money.
+                Fees are per contract, per leg, each way; many brokers charge $0–$0.65.
+              </p>
+              <details className="opt-model">
+                <summary>Pricing model</summary>
+                <div className="row-3 keep">
+                  <label className="field"><span>Volatility lookback (days)</span><input id="opt-lookback" type="number" inputMode="numeric" min={5} max={120} value={opt.volLookbackDays} onChange={(e) => setOpt("volLookbackDays", e.target.value)} /></label>
+                  <label className="field"><span>Implied ÷ realized vol</span><input id="opt-volmult" type="number" inputMode="decimal" min={0.5} max={3} step={0.05} value={opt.volMultiplier} onChange={(e) => setOpt("volMultiplier", e.target.value)} /></label>
+                  <label className="field"><span>Interest rate %</span><input id="opt-rate" type="number" inputMode="decimal" min={0} max={20} step={0.25} value={opt.ratePct} onChange={(e) => setOpt("ratePct", e.target.value)} /></label>
+                </div>
+              </details>
+            </>
+          ) : (<>
           <label className="field preset-pick">
             <span>Small account preset</span>
             <select value="" onChange={(e) => e.target.value && applyPreset(e.target.value)}>
@@ -193,6 +248,7 @@ export default function StrategyEditor() {
               This backtester doesn't simulate margin calls, so TradingView's results may differ.
             </p>
           )}
+          </>)}
           <label className="field">
             <span>Notes</span>
             <textarea rows={2} maxLength={1000} value={s.description} onChange={(e) => set({ description: e.target.value })} placeholder="What's the idea behind this strategy?" />
@@ -211,15 +267,27 @@ export default function StrategyEditor() {
               <div className="results">
                 <p className="muted small run-meta">
                   {run.strategy.symbol} · {run.strategy.interval} · {run.candles.length} bars · {fmt.date(run.candles[0].time)} → {fmt.date(run.candles[run.candles.length - 1].time)}
-                  {run.result.metrics.rejectedOrders > 0 && ` · ${run.result.metrics.rejectedOrders} entries skipped (not enough equity at the fill price)`}
+                  {run.result.metrics.rejectedOrders > 0 && (run.result.options
+                    ? ` · ${run.result.metrics.rejectedOrders} entries skipped (one contract cost more than the limit per trade)`
+                    : ` · ${run.result.metrics.rejectedOrders} entries skipped (not enough equity at the fill price)`)}
                 </p>
+                {run.result.options && <EstimateNote options={run.result.options} />}
                 <MetricsGrid m={run.result.metrics} />
-                <CostCheck m={run.result.metrics} settlement={run.result.settlement} strategy={run.strategy} />
+                {run.result.options ? (
+                  <>
+                    <OptionsCostCheck m={run.result.metrics} />
+                    <OptionsPreview preview={run.result.options.preview} capital={run.strategy.risk.initialCapital} settings={run.result.options.settings} />
+                  </>
+                ) : (
+                  <CostCheck m={run.result.metrics} settlement={run.result.settlement} strategy={run.strategy} />
+                )}
                 <PriceChart candles={run.candles} overlays={chart.overlays} panes={chart.panes} markers={chart.markers} />
                 <h4>Equity</h4>
                 <EquityChart equity={run.result.equity} />
                 <h4>Trades</h4>
-                <TradesTable trades={run.result.trades} openTrade={run.result.openTrade} intraday={isIntraday(run.candles)} />
+                {run.result.options
+                  ? <OptionsTradesTable trades={run.result.trades} openTrade={run.result.openTrade} intraday={isIntraday(run.candles)} />
+                  : <TradesTable trades={run.result.trades} openTrade={run.result.openTrade} intraday={isIntraday(run.candles)} />}
               </div>
             ) : (
               <div className="empty">

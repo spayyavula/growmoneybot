@@ -18,6 +18,7 @@ const equityPoints = (equity, max) => downsample(equity, max).map((p) => ({ time
 export async function snapshot(strategy) {
   const spec = strategySpec(strategy);
   if (spec.market === "csv") throw new PublishError("Uploaded CSV data can't be verified. Use crypto or stock data to publish.");
+  if (spec.instrument === "options") throw new PublishError("Options strategies can't be published to the marketplace yet. Their results are model estimates, not verified prices.");
   if (!spec.entry.conditions.length) throw new PublishError("Add at least one entry condition before publishing.");
 
   const candles = await getCandles({ market: spec.market, symbol: spec.symbol, interval: spec.interval, bars: spec.bars, completeOnly: true });

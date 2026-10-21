@@ -18,6 +18,9 @@ const strategySchema = new mongoose.Schema(
     direction: { type: String, enum: ["long", "short"], default: "long" },
     // Stock account type: "cash" turns on the T+1 settlement check in results
     account: { type: String, enum: ["cash", "margin"], default: "margin" },
+    // "options": each trade opens an options position (settings in `options`); unset = shares
+    instrument: { type: String, enum: ["options"] },
+    options: { type: mongoose.Schema.Types.Mixed },
     entry: ruleGroup,
     exit: ruleGroup,
     risk: {

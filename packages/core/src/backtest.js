@@ -1,5 +1,9 @@
 import { ruleSeries } from "./evaluate.js";
 import { INTERVALS } from "./catalog.js";
+import { tradingDay } from "./marketTime.js";
+import { runOptionsBacktest } from "./options.js";
+
+export { tradingDay };
 
 /**
  * Bar-by-bar backtest that mirrors TradingView's default strategy behaviour:
@@ -21,6 +25,7 @@ import { INTERVALS } from "./catalog.js";
  *   trades the rules open after the publish date count.
  */
 export function runBacktest(bars, strategy, options = {}) {
+  if (strategy?.instrument === "options") return runOptionsBacktest(bars, strategy);
   if (!bars?.length || bars.length < 3) throw new Error("Not enough price data to backtest");
 
   const risk = { initialCapital: 10000, positionSizePct: 100, feePct: 0, stopLossPct: 0, takeProfitPct: 0, slippagePct: 0, ...strategy.risk };
@@ -175,22 +180,6 @@ export function runBacktest(bars, strategy, options = {}) {
 }
 
 // ---- US cash-account settlement (T+1) -----------------------------------
-
-// US Eastern trading day of a bar (YYYYMMDD as a number), with US daylight-saving rules
-// (2nd Sunday of March → 1st Sunday of November). No Intl, so it runs the same everywhere.
-export function tradingDay(unixSeconds) {
-  const utc = new Date(unixSeconds * 1000);
-  const y = utc.getUTCFullYear();
-  const nthSunday = (month, n) => {
-    const first = new Date(Date.UTC(y, month, 1)).getUTCDay();
-    return 1 + ((7 - first) % 7) + 7 * (n - 1);
-  };
-  const dstStart = Date.UTC(y, 2, nthSunday(2, 2), 7); // 2:00 EST = 07:00 UTC
-  const dstEnd = Date.UTC(y, 10, nthSunday(10, 1), 6); // 2:00 EDT = 06:00 UTC
-  const offsetH = utc.getTime() >= dstStart && utc.getTime() < dstEnd ? -4 : -5;
-  const et = new Date(utc.getTime() + offsetH * 3600 * 1000);
-  return et.getUTCFullYear() * 10000 + (et.getUTCMonth() + 1) * 100 + et.getUTCDate();
-}
 
 /**
  * Good-faith violations a US cash account would have had: a position bought with

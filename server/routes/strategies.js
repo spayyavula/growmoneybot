@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { normalizeOptions } from "@gmb/core";
 import mongoose from "mongoose";
 import Strategy from "../models/Strategy.js";
 import { connectDB } from "../db.js";
@@ -41,6 +42,10 @@ function cleanBody(body = {}) {
   for (const k of ["name", "description", "market", "symbol", "interval", "bars", "direction", "risk", "account"]) {
     if (body[k] !== undefined) out[k] = body[k];
   }
+  if (body.instrument !== undefined) {
+    out.instrument = body.instrument === "options" ? "options" : undefined;
+    out.options = out.instrument ? normalizeOptions(body.options) : undefined;
+  }
   if (body.entry !== undefined) out.entry = cleanGroup(body.entry);
   if (body.exit !== undefined) out.exit = cleanGroup(body.exit);
   return out;
@@ -73,9 +78,17 @@ router.get("/:id", wrap(async (req, res) => {
 router.put("/:id", wrap(async (req, res) => {
   if (!validId(req.params.id)) return res.status(404).json({ ok: false, error: "Not found" });
   await connectDB();
+  const body = cleanBody(req.body);
+  const update = { $set: body };
+  if ("instrument" in body && !body.instrument) {
+    // Switched back to shares: remove the options settings
+    delete body.instrument;
+    delete body.options;
+    update.$unset = { instrument: 1, options: 1 };
+  }
   const doc = await Strategy.findOneAndUpdate(
     { _id: req.params.id, user: req.userId },
-    { $set: cleanBody(req.body) },
+    update,
     { new: true, runValidators: true }
   );
   if (!doc) return res.status(404).json({ ok: false, error: "Not found" });

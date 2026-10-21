@@ -46,6 +46,7 @@ export function strategySpec(s) {
   return {
     market: n.market, symbol: String(n.symbol || "").toUpperCase(), interval: n.interval, bars: n.bars,
     direction: n.direction === "short" ? "short" : "long", entry: n.entry, exit: n.exit, risk: n.risk,
+    ...(n.instrument === "options" && { instrument: "options", options: n.options }),
   };
 }
 

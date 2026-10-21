@@ -1,2 +1,5 @@
 # Local Netlify folder
 .netlify
+
+# Clickable preview build (preview/combined branch)
+dist-preview
