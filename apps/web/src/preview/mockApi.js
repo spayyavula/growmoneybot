@@ -3,7 +3,7 @@
 // algorithms verified and live-tracked by the real @gmb/core engine. Nothing is saved.
 import {
   verifyBacktest, livePerformance, slimTrades, downsample, smallAccountFit, candleRows,
-  normalizeStrategy, strategySpec, TEMPLATES, fmt,
+  normalizeStrategy, strategySpec, TEMPLATES, fmt, parseStrategyText, fromDescriptionJson,
 } from "@gmb/core";
 import { eventNotification } from "../../../../server/liveEvents.js";
 
@@ -344,6 +344,15 @@ async function handle(method, path, query, body) {
       return ok({ strategy: s }, 201);
     }
     if (a2 === "dataset") return ok({ version: 1, dataHash: algo.verification.dataHash, rows: algo.rows });
+  }
+  if (a0 === "describe") {
+    const text = String(body?.text || "").trim();
+    if (text.length < 10) return fail(400, "Describe your strategy in a sentence or two: when to buy, when to sell.");
+    await new Promise((r) => setTimeout(r, 400));
+    const base = { ...(body.market && { market: body.market }), ...(body.symbol && { symbol: body.symbol }), ...(body.interval && { interval: body.interval }) };
+    const r = fromDescriptionJson(parseStrategyText(text), base);
+    r.strategy.description = `Described as: "${text.slice(0, 900)}"`;
+    return ok({ ...r, source: "parser", note: "The preview has no API key, so the built-in parser reads descriptions. With ANTHROPIC_API_KEY set, Claude translates any wording." });
   }
   if (a0 === "admin") return fail(403, "Admin is off in the preview.");
   return fail(404, `Not available in the preview: ${method} /api${path}`);

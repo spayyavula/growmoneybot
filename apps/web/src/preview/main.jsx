@@ -19,8 +19,8 @@ if (!window.location.hash || window.location.hash === "#/") window.location.hash
 function PreviewBar() {
   return (
     <div className="preview-bar" role="note">
-      <b>Preview</b> · master (PRs #3–#6 merged) · sample prices, nothing is saved ·{" "}
-      <a href="#/app/strategies/guided">Guided setup</a> · <a href="#/app/strategies/new">Builder</a> · <a href="#/app/marketplace">Marketplace</a> · <a href="#/app/signals">Alerts</a>
+      <b>Preview</b> · master + PR #7 · sample prices, nothing is saved ·{" "}
+      <a href="#/app/strategies/describe">Describe it</a> · <a href="#/app/strategies/guided">Guided setup</a> · <a href="#/app/strategies/new">Builder</a> · <a href="#/app/marketplace">Marketplace</a> · <a href="#/app/signals">Alerts</a>
     </div>
   );
 }
