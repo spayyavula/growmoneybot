@@ -315,3 +315,59 @@ code.break { background: var(--bg); padding: 10px 12px; border-radius: 10px; fon
 .opt-model { margin: 4px 0 12px; }
 .opt-model summary { cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--label-2); min-height: 32px; }
 @media (min-width: 600px) { .opt-figures { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Guided builder */
+.guided { max-width: 780px; margin: 0 auto; display: grid; gap: 14px; }
+.guided-head h1 { margin: 6px 0 4px; text-wrap: balance; }
+.guided-head p { margin: 0; max-width: 60ch; }
+.guided-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; overflow-x: auto; }
+.guided-steps li { flex: 1 1 0; min-width: 64px; font-size: 0.78rem; color: var(--label-3); border-top: 3px solid var(--fill); padding-top: 6px; }
+.guided-steps li.done { color: var(--label-2); border-top-color: var(--accent-2); }
+.guided-steps li.current { color: var(--label); font-weight: 600; border-top-color: var(--accent); }
+.guided-steps .link-btn { font-size: inherit; padding: 0; min-height: 0; }
+.guided-panel { display: grid; gap: 12px; }
+.guided-panel h2 { margin: 0; font-size: 1.15rem; text-wrap: balance; }
+.guided-panel h3 { margin: 8px 0 0; font-size: 0.95rem; }
+.choice-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+.choice {
+  display: grid; gap: 6px; align-content: start; text-align: left; font: inherit; color: var(--label); cursor: pointer;
+  padding: 14px; min-height: var(--tap); background: var(--bg-elev); border: 1px solid var(--sep-strong); border-radius: var(--radius-sm);
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.choice:hover:not(:disabled) { border-color: var(--accent); }
+.choice:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+.choice.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-tint); }
+.choice:disabled { opacity: 0.5; cursor: not-allowed; }
+.choice > span { font-size: 0.86rem; color: var(--label-2); line-height: 1.45; }
+.choice-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.choice-head b { font-size: 0.98rem; color: var(--label); }
+.choice-aside { font-size: 0.72rem; font-weight: 600; color: var(--label-2); white-space: nowrap; }
+.choice .choice-note { font-size: 0.78rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.choice.on .choice-note { color: var(--label-2); }
+.guided-symbol input { max-width: 220px; text-transform: uppercase; }
+.guided-capital { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.guided-capital .field input { max-width: 160px; }
+.guided-summary { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 65ch; line-height: 1.5; }
+.guided-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.guided-results div { background: var(--fill-2); border-radius: var(--radius-sm); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.guided-results dt { font-size: 0.74rem; color: var(--label-2); }
+.guided-results dd { margin: 0; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.guided-results span { font-size: 0.74rem; color: var(--label-3); }
+.cost-line { margin: 0; font-weight: 600; }
+.warn-text { color: var(--warn); }
+.guided-rules summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; min-height: 32px; }
+.guided-final { display: flex; flex-wrap: wrap; gap: 10px; }
+.guided-nav {
+  position: sticky; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); z-index: 5;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--glass-strong); backdrop-filter: blur(16px); border: 0.5px solid var(--sep); border-radius: var(--radius-sm);
+}
+.empty-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.guided-link { display: inline-block; margin-left: 12px; }
+@media (min-width: 600px) {
+  .choice-grid.two, .choice-grid:not(.three) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .guided-results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) { .guided-nav { bottom: 16px; } }
+@media (prefers-reduced-motion: reduce) { .choice { transition: none; } }
