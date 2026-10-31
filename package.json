@@ -16,8 +16,10 @@
     "models:publish": "node server/scripts/publish-models.js --publish",
     "dev:web": "npm run dev -w @gmb/web",
     "dev:mobile": "npm run start -w @gmb/mobile",
+    "dev:jokes": "npm run dev -w @gmb/jokes",
     "build": "npm run build -w @gmb/web",
     "build:web": "npm run build -w @gmb/web",
+    "build:jokes": "npm run build -w @gmb/jokes",
     "test": "node --test \"server/**/*.test.js\""
   },
   "dependencies": {

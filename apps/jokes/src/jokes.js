@@ -1,0 +1,81 @@
+// Joke data. Each joke is a list of lines so dialogue renders one speaker per line.
+
+export const LANGUAGES = [
+  { id: "en", label: "English", short: "EN", font: "latin" },
+  { id: "hi", label: "हिन्दी", short: "हि", font: "devanagari" },
+  { id: "te", label: "తెలుగు", short: "తె", font: "telugu" },
+];
+
+export const CATEGORIES = [
+  { id: "school", emoji: "🏫", color: "#ff6b6b", label: { en: "School", hi: "स्कूल", te: "బడి" } },
+  { id: "doctor", emoji: "🩺", color: "#4dabf7", label: { en: "Doctor", hi: "डॉक्टर", te: "డాక్టర్" } },
+  { id: "family", emoji: "👨‍👩‍👧", color: "#ffa94d", label: { en: "Family", hi: "परिवार", te: "కుటుంబం" } },
+  { id: "food", emoji: "🍛", color: "#69db7c", label: { en: "Food", hi: "खाना", te: "భోజనం" } },
+  { id: "tech", emoji: "💻", color: "#9775fa", label: { en: "Tech", hi: "टेक", te: "టెక్" } },
+  { id: "money", emoji: "💰", color: "#ffd43b", label: { en: "Money", hi: "पैसा", te: "డబ్బు" } },
+];
+
+export const JOKES = {
+  en: [
+    { cat: "school", lines: ["Teacher: Why are you late?", "Student: Because of the sign, sir.", "Teacher: What sign?", "Student: The one that says “School Ahead — Go Slow.”"] },
+    { cat: "school", lines: ["Why was the maths book sad?", "It had too many problems."] },
+    { cat: "school", lines: ["Teacher: If I give you two cats and then two more, how many do you have?", "Student: Five.", "Teacher: How?!", "Student: I already have one at home."] },
+    { cat: "doctor", lines: ["Patient: Doctor, I feel like a pair of curtains.", "Doctor: Pull yourself together."] },
+    { cat: "doctor", lines: ["Patient: Doctor, I broke my arm in two places.", "Doctor: Then stop going to those places."] },
+    { cat: "doctor", lines: ["Patient: Doctor, everyone keeps ignoring me.", "Doctor: Next!"] },
+    { cat: "family", lines: ["Son: Dad, can you put my shoes on?", "Dad: No, I don’t think they’ll fit me."] },
+    { cat: "family", lines: ["Mom: Why is your report card in the freezer?", "Kid: You said my grades needed to cool down."] },
+    { cat: "family", lines: ["Wife: What should I cook today?", "Husband: Whatever you like.", "Wife: Great — let’s eat out!"] },
+    { cat: "food", lines: ["Why did the tomato blush?", "Because it saw the salad dressing."] },
+    { cat: "food", lines: ["I’m on a seafood diet.", "I see food, and I eat it."] },
+    { cat: "food", lines: ["What do you call a fake noodle?", "An impasta."] },
+    { cat: "tech", lines: ["Why do programmers prefer dark mode?", "Because light attracts bugs."] },
+    { cat: "tech", lines: ["I told my computer I needed a break.", "It said, “No problem — I’ll go to sleep.”"] },
+    { cat: "tech", lines: ["There are 10 kinds of people in the world:", "those who understand binary, and those who don’t."] },
+    { cat: "money", lines: ["Why did the banker quit his job?", "He lost interest."] },
+    { cat: "money", lines: ["They say money talks.", "Mine only ever says goodbye."] },
+    { cat: "money", lines: ["Why is money called dough?", "Because we all knead it."] },
+  ],
+
+  hi: [
+    { cat: "school", lines: ["टीचर: ताजमहल किसने बनाया?", "पप्पू: कारीगरों ने, सर।", "टीचर: अरे, बनवाया किसने?", "पप्पू: ठेकेदार ने!"] },
+    { cat: "school", lines: ["टीचर: पप्पू, होमवर्क क्यों नहीं किया?", "पप्पू: सर, लाइट चली गई थी।", "टीचर: तो मोमबत्ती जला लेते।", "पप्पू: माचिस मंदिर में रखी थी, और मैं नहाया नहीं था!"] },
+    { cat: "school", lines: ["टीचर: पानी का फ़ॉर्मूला बताओ।", "छात्र: H I J K L M N O.", "टीचर: ये क्या है?", "छात्र: आपने ही तो कहा था — H to O!"] },
+    { cat: "doctor", lines: ["मरीज़: डॉक्टर साहब, मुझे भूलने की बीमारी है।", "डॉक्टर: कब से?", "मरीज़: कौन-सी बीमारी?"] },
+    { cat: "doctor", lines: ["डॉक्टर: नींद नहीं आती तो भेड़ें गिनिए।", "मरीज़ (अगले दिन): हज़ार भेड़ें गिनीं…", "…फिर उन्हें बेचकर मुनाफ़ा गिनने में सुबह हो गई!"] },
+    { cat: "doctor", lines: ["मरीज़: डॉक्टर साहब, कोई मेरी बात नहीं सुनता।", "डॉक्टर: अगला!"] },
+    { cat: "family", lines: ["पत्नी: आज खाने में क्या बनाऊँ?", "पति: जो तुम्हें अच्छा लगे।", "पत्नी: तो चलो, बाहर खाने चलते हैं!"] },
+    { cat: "family", lines: ["पप्पू: मम्मी, आज बस के पीछे दौड़कर 20 रुपये बचाए!", "मम्मी: बुद्धू! टैक्सी के पीछे दौड़ता तो 200 बचते!"] },
+    { cat: "family", lines: ["पापा: तुम्हारा रिपोर्ट कार्ड कहाँ है?", "बेटा: दोस्त को दे दिया पापा —", "उसे अपने पापा को डराना था!"] },
+    { cat: "food", lines: ["ग्राहक: वेटर, सूप में मक्खी है!", "वेटर: चिंता मत कीजिए साहब, वो ज़्यादा नहीं पिएगी।"] },
+    { cat: "food", lines: ["मेहमान: आपके परांठे इतने अच्छे थे कि गिनती ही भूल गया!", "मेज़बान: कोई बात नहीं, मैंने गिने थे — ग्यारह!"] },
+    { cat: "food", lines: ["मैंने डाइट शुरू की है —", "अब सिर्फ़ दो वक़्त खाता हूँ: जब भूख लगे, और जब खाना दिखे।"] },
+    { cat: "tech", lines: ["दादी: ये Google कौन है? हर सवाल का जवाब देता है!", "पोता: बिल्कुल आपकी तरह दादी —", "बिना पूछे भी सब बता देता है!"] },
+    { cat: "tech", lines: ["पापा: बेटा, Wi-Fi का पासवर्ड क्या है?", "बेटा: पहले अपना होमवर्क पूरा कीजिए!"] },
+    { cat: "tech", lines: ["फ़ोन की बैटरी 1% हो तो इंसान चार्जर ढूँढने में", "उसैन बोल्ट से भी तेज़ दौड़ता है!"] },
+    { cat: "money", lines: ["महीने के आख़िर में मेरा बटुआ प्याज़ जैसा होता है —", "खोलते ही आँसू आ जाते हैं।"] },
+    { cat: "money", lines: ["दोस्त: यार, 500 रुपये उधार दे दे।", "मैं: मेरे पास सिर्फ़ 300 हैं।", "दोस्त: ठीक है, 300 दे दे — बाकी 200 तू मुझे उधार रहा!"] },
+    { cat: "money", lines: ["पप्पू: पापा, पैसे पेड़ पर नहीं उगते,", "तो बैंक की ‘ब्रांच’ क्यों होती है?"] },
+  ],
+
+  te: [
+    { cat: "school", lines: ["టీచర్: ఎందుకు ఆలస్యంగా వచ్చావు?", "విద్యార్థి: రోడ్డు మీద బోర్డు చూశాను సార్ —", "“స్కూల్ ముందుంది, నెమ్మదిగా వెళ్ళండి” అని!"] },
+    { cat: "school", lines: ["టీచర్: చింటూ, “నేను అందంగా ఉన్నాను” — ఇది ఏ కాలం?", "చింటూ: భూతకాలం, మేడమ్!"] },
+    { cat: "school", lines: ["టీచర్: హోంవర్క్ ఎందుకు చేయలేదు?", "చింటూ: కరెంటు పోయింది సార్.", "టీచర్: కొవ్వొత్తి వెలిగించొచ్చు కదా?", "చింటూ: అగ్గిపెట్టె దేవుడి గదిలో ఉంది, నేను స్నానం చేయలేదు సార్!"] },
+    { cat: "doctor", lines: ["రోగి: డాక్టర్ గారు, నాకు మతిమరుపు వచ్చింది.", "డాక్టర్: ఎప్పటి నుంచి?", "రోగి: ఏది ఎప్పటి నుంచి?"] },
+    { cat: "doctor", lines: ["రోగి: డాక్టర్, రెండు చోట్ల చేయి విరిగింది.", "డాక్టర్: అయితే ఇక ఆ రెండు చోట్లకూ వెళ్ళకండి!"] },
+    { cat: "doctor", lines: ["రోగి: డాక్టర్ గారు, ఎవరూ నన్ను పట్టించుకోవట్లేదు.", "డాక్టర్: నెక్స్ట్!"] },
+    { cat: "family", lines: ["భార్య: ఈ రోజు వంట ఏం చేయమంటారు?", "భర్త: నీకు ఏది ఇష్టమైతే అదే.", "భార్య: అయితే పదండి, హోటల్‌కి వెళ్దాం!"] },
+    { cat: "family", lines: ["చింటూ: అమ్మా, బస్సు వెనకాల పరిగెత్తి 20 రూపాయలు మిగిల్చాను!", "అమ్మ: పిచ్చోడా, ఆటో వెనకాల పరిగెత్తితే 100 మిగిలేవి కదా!"] },
+    { cat: "family", lines: ["నాన్న: నీ రిపోర్ట్ కార్డ్ ఎక్కడ?", "కొడుకు: ఫ్రెండ్‌కి ఇచ్చాను నాన్నా —", "వాళ్ళ నాన్నని భయపెట్టాలంట!"] },
+    { cat: "food", lines: ["కస్టమర్: వెయిటర్, సాంబార్‌లో ఈగ!", "వెయిటర్: కంగారు పడకండి సార్, అది ఎక్కువ తాగదు."] },
+    { cat: "food", lines: ["అతిథి: మీ దోశలు ఎంత బాగున్నాయంటే, ఎన్ని తిన్నానో లెక్కే లేదు!", "హోస్ట్: పర్లేదు, నేను లెక్కపెట్టాను — పదకొండు!"] },
+    { cat: "food", lines: ["నేను సీ-ఫుడ్ డైట్‌లో ఉన్నాను.", "ఏ ఫుడ్ ‘సీ’ (see) చేస్తే, అది తినేస్తా!"] },
+    { cat: "tech", lines: ["అమ్మమ్మ: ఈ Google ఎవరు రా? ఏది అడిగినా చెప్పేస్తాడు!", "మనవడు: అచ్చం నీలాగే అమ్మమ్మా —", "అడగకపోయినా అన్నీ చెప్తాడు!"] },
+    { cat: "tech", lines: ["ప్రోగ్రామర్లు డార్క్ మోడ్ ఎందుకు ఇష్టపడతారు?", "ఎందుకంటే వెలుతురుకి బగ్స్ వస్తాయి!"] },
+    { cat: "tech", lines: ["ఫోన్ బ్యాటరీ 1% ఉన్నప్పుడు ఛార్జర్ కోసం మనం పరిగెత్తే స్పీడ్‌ని", "ఉసేన్ బోల్ట్ కూడా అందుకోలేడు!"] },
+    { cat: "money", lines: ["నెలాఖరులో నా పర్సు ఉల్లిపాయ లాంటిది —", "తెరిస్తే కన్నీళ్ళు వస్తాయి."] },
+    { cat: "money", lines: ["స్నేహితుడు: రా, 500 అప్పు ఇవ్వు.", "నేను: నా దగ్గర 300 ఏ ఉన్నాయి.", "స్నేహితుడు: సరే, 300 ఇవ్వు — మిగతా 200 నువ్వు నాకు బాకీ!"] },
+    { cat: "money", lines: ["బ్యాంకర్ ఉద్యోగం ఎందుకు మానేశాడు?", "అతనికి ‘ఇంట్రెస్ట్’ పోయింది!"] },
+  ],
+};
