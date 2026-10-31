@@ -6,6 +6,8 @@ const reducedMotion =
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const SPIN_MS = reducedMotion ? 600 : 4200;
 const REEL_ITEM_H = 56;
+// The claude.ai artifact build sets HASYA_NO_SHARE: its sandbox refuses the Web Share API.
+const canShare = typeof navigator !== "undefined" && !!navigator.share && !globalThis.HASYA_NO_SHARE;
 
 const UI = {
   en: { title: "Hasya Wheel", tag: "Spin for a laugh", spin: "Spin!", spinning: "Spinning…", again: "Spin again", copy: "Copy", copied: "Copied!", share: "Share", mix: "Mix", hint: "Pick a language, then spin the wheel.", laughs: "laughs" },
@@ -109,7 +111,16 @@ export default function App() {
       setCopied(true);
       later(() => setCopied(false), 1500);
     } catch {
-      /* clipboard blocked — ignore */
+      // Clipboard refused (some embedded views): select the joke so the user can copy it by hand.
+      const lines = document.querySelectorAll(".card .line");
+      if (lines.length) {
+        const range = document.createRange();
+        range.setStartBefore(lines[0]);
+        range.setEndAfter(lines[lines.length - 1]);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
   };
   const share = async () => {
@@ -203,7 +214,7 @@ export default function App() {
                 <button className="ghost-btn" onClick={copy}>
                   {copied ? t.copied : t.copy}
                 </button>
-                {typeof navigator !== "undefined" && navigator.share && (
+                {canShare && (
                   <button className="ghost-btn" onClick={share}>
                     {t.share}
                   </button>

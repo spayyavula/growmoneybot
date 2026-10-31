@@ -11,7 +11,7 @@
   --shadow: 0 10px 30px rgba(120, 60, 0, 0.15);
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #17120d;
     --bg-2: #2a1d12;
     --ink: #fdf1e2;
@@ -21,14 +21,28 @@
     --brand: #ff7a50;
     --rim: #120c07;
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #17120d;
+  --bg-2: #2a1d12;
+  --ink: #fdf1e2;
+  --muted: #bfa88c;
+  --card: #231a12;
+  --line: #3b2c1e;
+  --brand: #ff7a50;
+  --rim: #120c07;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  min-height: 100vh;
-  background: radial-gradient(1200px 600px at 50% -10%, var(--bg-2), var(--bg));
+  background-color: var(--bg);
+  background-image: radial-gradient(1200px 600px at 50% -10%, var(--bg-2), var(--bg));
+  background-attachment: fixed;
   color: var(--ink);
   font-family: "Baloo 2", system-ui, sans-serif;
   overflow-x: hidden;
@@ -39,7 +53,13 @@ body {
 button { font: inherit; color: inherit; cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: 0.55; }
 
-.app { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+.app {
+  max-width: 720px; margin: 0 auto; overflow-x: clip;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
 
 /* Header */
 .top { text-align: center; position: relative; }

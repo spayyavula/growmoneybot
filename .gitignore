@@ -11,3 +11,4 @@ client/dist
 .design-backup-*/
 *.tgz
 dist/
+dist-artifact/
