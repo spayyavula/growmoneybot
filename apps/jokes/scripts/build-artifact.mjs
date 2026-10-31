@@ -29,10 +29,10 @@ const css = readFileSync(resolve(root, "src/styles.css"), "utf8");
 
 const html = `<title>Hasya Wheel</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Spin the wheel for a random joke in English, Hindi or Telugu.">
+<meta name="description" content="Spin the wheel for a random joke in English, Hindi, Telugu or Tamil.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap">
 <style>
 ${css}
 </style>

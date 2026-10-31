@@ -50,6 +50,7 @@ body {
 .font-latin { font-family: "Baloo 2", system-ui, sans-serif; }
 .font-devanagari { font-family: "Noto Sans Devanagari", "Baloo 2", sans-serif; }
 .font-telugu { font-family: "Noto Sans Telugu", "Baloo 2", sans-serif; }
+.font-tamil { font-family: "Noto Sans Tamil", "Baloo 2", sans-serif; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: 0.55; }
 

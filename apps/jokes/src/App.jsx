@@ -12,6 +12,7 @@ const canShare = typeof navigator !== "undefined" && !!navigator.share && !globa
 const UI = {
   en: { title: "Hasya Wheel", tag: "Spin for a laugh", spin: "Spin!", spinning: "Spinning…", again: "Spin again", copy: "Copy", copied: "Copied!", share: "Share", mix: "Mix", hint: "Pick a language, then spin the wheel.", laughs: "laughs" },
   hi: { title: "हास्य चक्र", tag: "घुमाओ और हँसो", spin: "घुमाओ!", spinning: "घूम रहा है…", again: "फिर से घुमाओ", copy: "कॉपी", copied: "कॉपी हो गया!", share: "शेयर", mix: "मिक्स", hint: "भाषा चुनिए, फिर चक्र घुमाइए।", laughs: "ठहाके" },
+  ta: { title: "சிரிப்புச் சக்கரம்", tag: "சுழற்றுங்கள், சிரியுங்கள்", spin: "சுழற்று!", spinning: "சுழல்கிறது…", again: "மீண்டும் சுழற்று", copy: "நகல்", copied: "நகலெடுத்தாச்சு!", share: "பகிர்", mix: "கலவை", hint: "மொழியைத் தேர்ந்தெடுத்து, சக்கரத்தைச் சுழற்றுங்கள்.", laughs: "சிரிப்புகள்" },
   te: { title: "హాస్య చక్రం", tag: "తిప్పండి, నవ్వండి", spin: "తిప్పు!", spinning: "తిరుగుతోంది…", again: "మళ్ళీ తిప్పు", copy: "కాపీ", copied: "కాపీ అయింది!", share: "షేర్", mix: "మిక్స్", hint: "భాష ఎంచుకుని, చక్రం తిప్పండి.", laughs: "నవ్వులు" },
 };
 
@@ -34,7 +35,7 @@ const storage = {
 };
 
 export default function App() {
-  const [langMode, setLangMode] = useState(() => storage.get("hw-lang", "mix")); // en | hi | te | mix
+  const [langMode, setLangMode] = useState(() => storage.get("hw-lang", "mix")); // en | hi | te | ta | mix
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [joke, setJoke] = useState(null);
@@ -288,7 +289,7 @@ function Wheel({ rotation, lang, spinning }) {
 }
 
 function LanguageReel({ reel }) {
-  // Enough items to cover the furthest spin target (offset < 3 + 6 cycles + 3).
+  // Enough items to cover the furthest spin target (offset < n + 6 cycles + n).
   const items = Array.from({ length: LANGUAGES.length * 9 }, (_, i) => LANGUAGES[i % LANGUAGES.length]);
   return (
     <div className="reel" aria-hidden>
