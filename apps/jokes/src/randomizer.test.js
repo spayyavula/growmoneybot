@@ -3,10 +3,23 @@ import assert from "node:assert/strict";
 import { pickJoke, wheelRotation, segmentAt } from "./randomizer.js";
 import { JOKES, CATEGORIES, LANGUAGES } from "./jokes.js";
 
-test("every language has at least one joke per category", () => {
+test("every language has exactly 25 jokes per category", () => {
   for (const { id: lang } of LANGUAGES) {
     for (const { id: cat } of CATEGORIES) {
-      assert.ok(JOKES[lang].some((j) => j.cat === cat), `${lang}/${cat} is empty`);
+      const n = JOKES[lang].filter((j) => j.cat === cat).length;
+      assert.equal(n, 25, `${lang}/${cat} has ${n}`);
+    }
+  }
+});
+
+test("no duplicate jokes or empty lines within a language", () => {
+  for (const { id: lang } of LANGUAGES) {
+    const seen = new Set();
+    for (const j of JOKES[lang]) {
+      const key = j.lines.join("\n");
+      assert.ok(!seen.has(key), `${lang}: duplicate "${j.lines[0]}"`);
+      seen.add(key);
+      for (const line of j.lines) assert.ok(line.trim().length > 0, `${lang}: empty line in "${j.lines[0]}"`);
     }
   }
 });
